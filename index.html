@@ -3,236 +3,339 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Champion 傷害計算機</title>
+  <title>VGC Champion 傷害計算機</title>
   
-  <!-- 載入官方計算核心 -->
+  <!-- 引入官方核心 -->
   <script src="https://cdn.jsdelivr.net/npm/@smogon/calc/dist/calc.min.js"></script>
 
-  <!-- 載入 Firebase 模組 -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getAuth, 
-      GoogleAuthProvider, 
-      signInWithPopup, 
-      signOut, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      collection, 
-      addDoc, 
-      getDocs, 
-      query, 
-      where 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // 🔴 替換成你頭先在 Firebase 複製的設定 🔴
-    const firebaseConfig = {
-      apiKey: "AIzaSyCXZQiZe-hhkrv0zRNA1A3UpIpCovZvaHI",
-      authDomain: "pkmchampions-a84c7.firebaseapp.com",
-      projectId: "pkmchampions-a84c7",
-      storageBucket: "pkmchampions-a84c7.firebasestorage.app",
-      messagingSenderId: "521099058402",
-      appId: "1:521099058402:web:90c8f323c6e815a5a752bb",
-      measurementId: "G-H6R3T5FNK9"
-    };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let currentUser = null;
-
-    // 監聽登入狀態（完全不強迫登入）
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-      const userStatusDiv = document.getElementById("user-status");
-      const saveBtn = document.getElementById("save-btn");
-      const myPokemonSection = document.getElementById("my-pokemon-section");
-
-      if (user) {
-        userStatusDiv.innerHTML = `已登入：${user.displayName} <button id="logout-btn">登出</button>`;
-        document.getElementById("logout-btn").onclick = () => signOut(auth);
-        saveBtn.disabled = false;
-        saveBtn.innerText = "⭐ 儲存此寶可夢到我的帳號";
-        myPokemonSection.style.display = "block";
-        loadMySavedPokemon();
-      } else {
-        userStatusDiv.innerHTML = `<button id="login-btn">🔑 Google 登入 (啟用儲存功能)</button>`;
-        document.getElementById("login-btn").onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-        saveBtn.disabled = true;
-        saveBtn.innerText = "登入後可儲存配置";
-        myPokemonSection.style.display = "none";
-      }
-    });
-
-    // 儲存功能
-    window.saveCurrentPokemon = async function() {
-      if (!currentUser) return;
-      const select = document.getElementById("attackerSelect");
-      const pokeId = select.value;
-      const pokeName = select.options[select.selectedIndex].text;
-      const customNick = prompt("請為這隻寶可夢加個備註（例如：速攻型、耐久向）：", "常用配置");
-      
-      if (!customNick) return;
-
-      try {
-        await addDoc(collection(db, "saved_pokemon"), {
-          uid: currentUser.uid,
-          pokeId: pokeId,
-          name: pokeName,
-          tag: customNick,
-          createdAt: new Date()
-        });
-        alert("已成功儲存！");
-        loadMySavedPokemon();
-      } catch (err) {
-        alert("儲存失敗：" + err.message);
-      }
-    };
-
-    // 讀取自己已儲存的清單
-    async function loadMySavedPokemon() {
-      const listEl = document.getElementById("my-saved-list");
-      listEl.innerHTML = "讀取中...";
-      
-      const q = query(collection(db, "saved_pokemon"), where("uid", "==", currentUser.uid));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        listEl.innerHTML = "尚未有儲存的寶可夢。";
-        return;
-      }
-
-      listEl.innerHTML = "";
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const item = document.createElement("div");
-        item.className = "saved-item";
-        item.innerHTML = `
-          <span><strong>${data.name}</strong> [${data.tag}]</span>
-          <button onclick="applySaved('${data.pokeId}')">套用到攻擊方</button>
-        `;
-        listEl.appendChild(item);
-      });
-    }
-
-    window.applySaved = function(pokeId) {
-      document.getElementById("attackerSelect").value = pokeId;
-    };
-  </script>
-
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; padding: 20px; color: #1c1e21; }
-    .container { max-width: 650px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e5e5; padding-bottom: 12px; margin-bottom: 20px; }
-    .box { border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fafbfc; }
-    label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
-    select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
-    button.calc-btn { background: #e3350d; color: white; border: none; font-weight: bold; cursor: pointer; padding: 14px; }
-    button.calc-btn:hover { background: #c22d0b; }
-    .saved-box { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-    .saved-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px dashed #ddd; }
-    .saved-item button { width: auto; margin: 0; padding: 4px 10px; font-size: 12px; }
-    .result-box { margin-top: 20px; padding: 15px; background: #e7f3ff; border: 1px solid #b6d4fe; border-radius: 8px; font-size: 16px; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #eef2f5; margin: 0; padding: 15px; font-size: 13px; color: #222; }
+    
+    /* 頂部傷害橫幅 (仿截圖頂部) */
+    .top-summary { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .calc-result-title { font-size: 16px; font-weight: bold; color: #d32f2f; margin-bottom: 5px; }
+    .calc-result-detail { font-size: 14px; color: #444; }
+
+    /* 三欄式佈局 (左 - 中 - 右) */
+    .calc-grid { display: grid; grid-template-columns: 1fr 280px 1fr; gap: 12px; }
+    @media (max-width: 900px) { .calc-grid { grid-template-columns: 1fr; } }
+
+    .panel { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .panel-header { background: #2c3e50; color: #fff; padding: 10px 15px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .panel-header.field-header { background: #34495e; text-align: center; justify-content: center; }
+    .panel-body { padding: 12px; }
+
+    .row { display: flex; align-items: center; margin-bottom: 8px; gap: 8px; }
+    .row label { width: 70px; font-weight: bold; color: #555; }
+    input, select { flex: 1; padding: 6px 8px; border: 1px solid #ccd1d9; border-radius: 4px; font-size: 13px; }
+    
+    /* 數值微調區 (HP, 物攻, 物防...) */
+    .stat-row { display: grid; grid-template-columns: 50px 50px 1fr; gap: 6px; align-items: center; margin-bottom: 4px; font-size: 12px; }
+    .stat-row input[type="number"] { width: 100%; padding: 4px; text-align: center; }
+
+    /* 中間場地按鈕群 */
+    .field-btn-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+    .field-btn { flex: 1 1 45%; padding: 6px 2px; border: 1px solid #ccd1d9; background: #f8f9fa; border-radius: 4px; cursor: pointer; font-size: 12px; text-align: center; }
+    .field-btn.active { background: #3498db; color: white; border-color: #2980b9; font-weight: bold; }
+
+    /* 招式列表 */
+    .moves-container { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+    .move-item { display: flex; gap: 6px; margin-bottom: 6px; }
+    .move-item select { flex: 1; }
+    .move-btn { background: #e3350d; color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-weight: bold; }
+    .move-btn:hover { background: #b82b09; }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="top-bar">
-    <h2 style="margin: 0; font-size: 20px;">🏆 Champion 傷害計算機</h2>
-    <div id="user-status"><small>載入中...</small></div>
+  <!-- 頂部即時計算結果看板 (完全依照截圖樣式) -->
+  <div class="top-summary">
+    <div id="result-desc" class="calc-result-title">請選擇寶可夢與招式進行計算</div>
+    <div id="result-nums" class="calc-result-detail">傷害區間：--</div>
   </div>
 
-  <div id="my-pokemon-section" class="saved-box" style="display:none;">
-    <label>📂 我的常用隊伍：</label>
-    <div id="my-saved-list"></div>
-  </div>
-
-  <div class="box">
-    <label>攻擊方寶可夢：</label>
-    <select id="attackerSelect"></select>
+  <!-- 核心三欄版面 -->
+  <div class="calc-grid">
     
-    <label>使用招式：</label>
-    <select id="moveSelect">
-      <option value="Moonblast">月亮之力 (Moonblast)</option>
-      <option value="Shadow Ball">暗影球 (Shadow Ball)</option>
-      <option value="Stone Edge">尖石攻擊 (Stone Edge)</option>
-      <option value="Drain Punch">排水拳 (Drain Punch)</option>
-      <option value="Close Combat">近身戰 (Close Combat)</option>
-      <option value="Earthquake">地震 (Earthquake)</option>
-      <option value="Ivy Cudgel">棘藤棒 (Ivy Cudgel)</option>
-      <option value="Flare Blitz">閃焰衝鋒 (Flare Blitz)</option>
-      <option value="Surging Strikes">水流連打 (Surging Strikes)</option>
-    </select>
+    <!-- 左欄：寶可夢 1 (攻擊方) -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Pokémon 1 (攻擊方)</span>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <label>寶可夢：</label>
+          <input type="text" id="p1-search" placeholder="中/英文搜尋 (例如 振翼髮 / Flutter)" list="p1-list" oninput="onPokeChange(1)">
+          <datalist id="p1-list"></datalist>
+        </div>
+        <div class="row">
+          <label>性格：</label>
+          <select id="p1-nature" onchange="calculateNow()">
+            <option value="Adamant">固執 (+物攻 -特攻)</option>
+            <option value="Jolly">爽朗 (+速度 -特攻)</option>
+            <option value="Modest">內斂 (+特攻 -物攻)</option>
+            <option value="Timid">膽小 (+速度 -物攻)</option>
+            <option value="Brave">勇敢 (+物攻 -速度)</option>
+            <option value="Quiet">冷靜 (+特攻 -速度)</option>
+            <option value="Hardy">認真 (無修正)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>攜帶道具：</label>
+          <select id="p1-item" onchange="calculateNow()">
+            <option value="">(無)</option>
+            <option value="Booster Energy">驅勁能量 (Booster Energy)</option>
+            <option value="Choice Band">講究頭帶 (Choice Band)</option>
+            <option value="Choice Specs">講究眼鏡 (Choice Specs)</option>
+            <option value="Life Orb">生命寶珠 (Life Orb)</option>
+            <option value="Focus Sash">氣勢披帶 (Focus Sash)</option>
+          </select>
+        </div>
 
-    <button id="save-btn" onclick="saveCurrentPokemon()" disabled>登入後可儲存配置</button>
+        <div style="font-weight:bold; margin: 10px 0 5px;">努力值 (EVs)：</div>
+        <div class="stat-row"><span>HP</span><input type="number" id="p1-ev-hp" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>物攻</span><input type="number" id="p1-ev-atk" value="252" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>物防</span><input type="number" id="p1-ev-def" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>特攻</span><input type="number" id="p1-ev-spa" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>特防</span><input type="number" id="p1-ev-spd" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>速度</span><input type="number" id="p1-ev-spe" value="252" min="0" max="252" step="4" onchange="calculateNow()"></div>
+
+        <!-- 4 個招式 -->
+        <div class="moves-container">
+          <div style="font-weight:bold; margin-bottom:5px;">使用招式：</div>
+          <div class="row">
+            <select id="p1-move" onchange="calculateNow()"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中欄：場地環境 (Field) -->
+    <div class="panel">
+      <div class="panel-header field-header">
+        <span>對戰場地 (Field)</span>
+      </div>
+      <div class="panel-body">
+        <label>對戰模式：</label>
+        <div class="field-btn-group">
+          <div class="field-btn active" id="mode-doubles" onclick="setMode('doubles')">雙打 (Doubles)</div>
+          <div class="field-btn" id="mode-singles" onclick="setMode('singles')">單打 (Singles)</div>
+        </div>
+
+        <label>天氣環境：</label>
+        <div class="field-btn-group">
+          <div class="field-btn active" id="weather-none" onclick="setWeather('None')">無</div>
+          <div class="field-btn" id="weather-sun" onclick="setWeather('Sun')">大晴天</div>
+          <div class="field-btn" id="weather-rain" onclick="setWeather('Rain')">下雨</div>
+          <div class="field-btn" id="weather-sand" onclick="setWeather('Sand')">沙暴</div>
+          <div class="field-btn" id="weather-snow" onclick="setWeather('Snow')">雪天</div>
+        </div>
+
+        <label>場地狀態：</label>
+        <div class="field-btn-group">
+          <div class="field-btn active" id="terrain-none" onclick="setTerrain('None')">無</div>
+          <div class="field-btn" id="terrain-electric" onclick="setTerrain('Electric')">電氣</div>
+          <div class="field-btn" id="terrain-grassy" onclick="setTerrain('青草')">青草</div>
+          <div class="field-btn" id="terrain-psychic" onclick="setTerrain('精神')">精神</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右欄：寶可夢 2 (防守方) -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Pokémon 2 (防守方)</span>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <label>寶可夢：</label>
+          <input type="text" id="p2-search" placeholder="中/英文搜尋 (例如 班基拉 / Tyranitar)" list="p2-list" oninput="onPokeChange(2)">
+          <datalist id="p2-list"></datalist>
+        </div>
+        <div class="row">
+          <label>性格：</label>
+          <select id="p2-nature" onchange="calculateNow()">
+            <option value="Hardy">認真 (無修正)</option>
+            <option value="Impish">淘氣 (+物防 -特攻)</option>
+            <option value="Careful">慎重 (+特防 -特攻)</option>
+            <option value="Bold">溫和 (+物防 -物攻)</option>
+            <option value="Calm">溫燥 (+特防 -物攻)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>攜帶道具：</label>
+          <select id="p2-item" onchange="calculateNow()">
+            <option value="">(無)</option>
+            <option value="Assault Vest">突擊背心 (Assault Vest)</option>
+            <option value="Sitrus Berry">文柚果 (Sitrus Berry)</option>
+            <option value="Leftovers">吃剩的東西 (Leftovers)</option>
+          </select>
+        </div>
+
+        <div style="font-weight:bold; margin: 10px 0 5px;">努力值 (EVs)：</div>
+        <div class="stat-row"><span>HP</span><input type="number" id="p2-ev-hp" value="252" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>物攻</span><input type="number" id="p2-ev-atk" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>物防</span><input type="number" id="p2-ev-def" value="4" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>特攻</span><input type="number" id="p2-ev-spa" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>特防</span><input type="number" id="p2-ev-spd" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+        <div class="stat-row"><span>速度</span><input type="number" id="p2-ev-spe" value="0" min="0" max="252" step="4" onchange="calculateNow()"></div>
+      </div>
+    </div>
+
   </div>
-
-  <div class="box">
-    <label>防守方寶可夢：</label>
-    <select id="defenderSelect"></select>
-  </div>
-
-  <button class="calc-btn" onclick="runCalc()">⚡ 計算傷害</button>
-
-  <div id="output" class="result-box" style="display:none;"></div>
-</div>
 
 <script>
-// 讀取 champions.json 名單
-async function initSeasonPool() {
-  try {
-    const res = await fetch('champions.json');
-    const pool = await res.json();
-    
-    const atkSel = document.getElementById("attackerSelect");
-    const defSel = document.getElementById("defenderSelect");
+  // 招式中英名單
+  const MOVES = [
+    { zh: "月亮之力", en: "Moonblast" },
+    { zh: "暗影球", en: "Shadow Ball" },
+    { zh: "尖石攻擊", en: "Stone Edge" },
+    { zh: "近身戰", en: "Close Combat" },
+    { zh: "水流連打", en: "Surging Strikes" },
+    { zh: "閃焰衝鋒", en: "Flare Blitz" },
+    { zh: "地震", en: "Earthquake" },
+    { zh: "棘藤棒", en: "Ivy Cudgel" },
+    { zh: "木槌", en: "Wood Hammer" }
+  ];
 
-    pool.forEach(p => {
-      const opt = `<option value="${p.id}">${p.name} (${p.id})</option>`;
-      atkSel.innerHTML += opt;
-      defSel.innerHTML += opt;
+  let currentPool = [];
+  let currentField = { gameType: 'doubles', weather: 'None', terrain: 'None' };
+
+  // 初始化名單
+  async function init() {
+    try {
+      const res = await fetch('champions.json');
+      currentPool = await res.json();
+    } catch {
+      // 萬一 champions.json 載入失敗的預備資料
+      currentPool = [
+        { id: "Flutter Mane", name: "振翼髮" },
+        { id: "Tyranitar", name: "班基拉" },
+        { id: "Iron Hands", name: "鐵臂膀" },
+        { id: "Urshifu-Rapid-Strike", name: "連擊流武道熊師" }
+      ];
+    }
+
+    const p1List = document.getElementById("p1-list");
+    const p2List = document.getElementById("p2-list");
+    currentPool.forEach(p => {
+      p1List.innerHTML += `<option value="${p.name}">${p.id}</option>`;
+      p2List.innerHTML += `<option value="${p.name}">${p.id}</option>`;
     });
-  } catch (err) {
-    console.error("讀取 champions.json 失敗", err);
+
+    // 填入招式
+    const moveSelect = document.getElementById("p1-move");
+    MOVES.forEach(m => {
+      moveSelect.innerHTML += `<option value="${m.en}">${m.zh} (${m.en})</option>`;
+    });
+
+    // 預設攻擊方與防守方
+    document.getElementById("p1-search").value = currentPool[0].name;
+    document.getElementById("p2-search").value = currentPool[1].name;
+
+    calculateNow();
   }
-}
-initSeasonPool();
 
-// 計算核心
-function runCalc() {
-  const calcLib = window.calc;
-  const gen = calcLib.Generations.get(9);
+  // 找尋對應的英文 ID (支援輸入中文或英文)
+  function getPokeId(val) {
+    const found = currentPool.find(p => p.name.toLowerCase() === val.toLowerCase() || p.id.toLowerCase() === val.toLowerCase());
+    return found ? found.id : val;
+  }
 
-  const attackerId = document.getElementById("attackerSelect").value;
-  const defenderId = document.getElementById("defenderSelect").value;
-  const moveId = document.getElementById("moveSelect").value;
+  function onPokeChange(side) {
+    calculateNow();
+  }
 
-  const attacker = new calcLib.Pokemon(gen, attackerId);
-  const defender = new calcLib.Pokemon(gen, defenderId);
-  const move = new calcLib.Move(gen, moveId);
+  function setMode(mode) {
+    currentField.gameType = mode;
+    document.getElementById("mode-doubles").className = mode === 'doubles' ? 'field-btn active' : 'field-btn';
+    document.getElementById("mode-singles").className = mode === 'singles' ? 'field-btn active' : 'field-btn';
+    calculateNow();
+  }
 
-  const result = calcLib.calculate(gen, attacker, defender, move);
+  function setWeather(w) {
+    currentField.weather = w;
+    ['None', 'Sun', 'Rain', 'Sand', 'Snow'].forEach(name => {
+      const el = document.getElementById('weather-' + name.toLowerCase());
+      if (el) el.className = name === w ? 'field-btn active' : 'field-btn';
+    });
+    calculateNow();
+  }
 
-  const dmgRange = result.damage;
-  const minDmg = Array.isArray(dmgRange) ? dmgRange[0] : dmgRange;
-  const maxDmg = Array.isArray(dmgRange) ? dmgRange[dmgRange.length - 1] : dmgRange;
-  const defenderHp = defender.rawStats.hp;
+  function setTerrain(t) {
+    currentField.terrain = t;
+    ['None', 'Electric', 'Grassy', 'Psychic'].forEach(name => {
+      const el = document.getElementById('terrain-' + name.toLowerCase());
+      if (el) el.className = name === t ? 'field-btn active' : 'field-btn';
+    });
+    calculateNow();
+  }
 
-  const minPct = ((minDmg / defenderHp) * 100).toFixed(1);
-  const maxPct = ((maxDmg / defenderHp) * 100).toFixed(1);
+  // 執行即時計算
+  function calculateNow() {
+    if (!window.calc) return;
+    const calc = window.calc;
+    const gen = calc.Generations.get(9);
 
-  const out = document.getElementById("output");
-  out.style.display = "block";
-  out.innerHTML = `
-    <strong>計算結果：</strong><br>
-    傷害數值：<strong>${minDmg} ~ ${maxDmg}</strong> HP<br>
-    佔對手總血量：<strong>${minPct}% ~ ${maxPct}%</strong><br>
-    <small style="color: #666;">（${result.desc()}）</small>
-  `;
-}
+    const p1Name = getPokeId(document.getElementById("p1-search").value);
+    const p2Name = getPokeId(document.getElementById("p2-search").value);
+    const moveName = document.getElementById("p1-move").value;
+
+    try {
+      const p1 = new calc.Pokemon(gen, p1Name, {
+        nature: document.getElementById("p1-nature").value,
+        item: document.getElementById("p1-item").value,
+        evs: {
+          hp: parseInt(document.getElementById("p1-ev-hp").value) || 0,
+          atk: parseInt(document.getElementById("p1-ev-atk").value) || 0,
+          def: parseInt(document.getElementById("p1-ev-def").value) || 0,
+          spa: parseInt(document.getElementById("p1-ev-spa").value) || 0,
+          spd: parseInt(document.getElementById("p1-ev-spd").value) || 0,
+          spe: parseInt(document.getElementById("p1-ev-spe").value) || 0
+        }
+      });
+
+      const p2 = new calc.Pokemon(gen, p2Name, {
+        nature: document.getElementById("p2-nature").value,
+        item: document.getElementById("p2-item").value,
+        evs: {
+          hp: parseInt(document.getElementById("p2-ev-hp").value) || 0,
+          atk: parseInt(document.getElementById("p2-ev-atk").value) || 0,
+          def: parseInt(document.getElementById("p2-ev-def").value) || 0,
+          spa: parseInt(document.getElementById("p2-ev-spa").value) || 0,
+          spd: parseInt(document.getElementById("p2-ev-spd").value) || 0,
+          spe: parseInt(document.getElementById("p2-ev-spe").value) || 0
+        }
+      });
+
+      const move = new calc.Move(gen, moveName);
+      const field = new calc.Field({
+        gameType: currentField.gameType === 'doubles' ? 'Doubles' : 'Singles',
+        weather: currentField.weather !== 'None' ? currentField.weather : undefined,
+        terrain: currentField.terrain !== 'None' ? currentField.terrain : undefined
+      });
+
+      const result = calc.calculate(gen, p1, p2, move, field);
+
+      // 提取傷害與百分比
+      const dmg = result.damage;
+      const minDmg = Array.isArray(dmg) ? dmg[0] : dmg;
+      const maxDmg = Array.isArray(dmg) ? dmg[dmg.length - 1] : dmg;
+      const defenderHp = p2.rawStats.hp;
+      const minPct = ((minDmg / defenderHp) * 100).toFixed(1);
+      const maxPct = ((maxDmg / defenderHp) * 100).toFixed(1);
+
+      document.getElementById("result-desc").innerText = result.desc();
+      document.getElementById("result-nums").innerText = `傷害數值：${minDmg} ~ ${maxDmg} (${minPct}% - ${maxPct}%) | 對手總 HP：${defenderHp}`;
+
+    } catch (err) {
+      document.getElementById("result-desc").innerText = "無法計算（請確認寶可夢或招式名稱正確）";
+      document.getElementById("result-nums").innerText = err.message;
+    }
+  }
+
+  window.onload = init;
 </script>
 </body>
 </html>
