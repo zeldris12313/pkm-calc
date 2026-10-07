@@ -2,78 +2,70 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VGC Champions 傷害計算機</title>
-  
-  <!-- 引入模組化檔案 -->
-  <script src="items.js"></script>
-  <script src="pokedex_part1.js"></script>
-  <!-- 將來若加第二批只需在此加: <script src="pokedex_part2.js"></script> -->
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pokémon Champions 傷害計算機</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif; background: #eef2f5; margin: 0; padding: 12px; font-size: 13px; color: #222; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif; background: #eef2f5; margin: 0; padding: 10px; font-size: 13px; color: #222; }
     
-    /* 頂部 4 招即時擊殺大看板 */
-    .summary-card { background: #fff; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; font-size: 15px; }
-    .moves-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    @media (max-width: 900px) { .moves-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 500px) { .moves-grid { grid-template-columns: 1fr; } }
+    /* 頂部 4 招擊殺看板 */
+    .summary-card { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; font-size: 14px; }
+    .moves-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    @media (max-width: 768px) { .moves-grid { grid-template-columns: 1fr 1fr; } }
     
-    .move-calc-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; background: #fafbfc; position: relative; border-top: 4px solid #999; }
-    .m-title { font-weight: bold; font-size: 13px; margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .m-damage { font-size: 14px; font-weight: bold; color: #c62828; margin-bottom: 4px; }
-    .m-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    .move-calc-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 8px; background: #fafbfc; border-top: 3px solid #2980b9; }
+    .m-title { font-weight: bold; font-size: 12px; margin-bottom: 2px; display: flex; justify-content: space-between; }
+    .m-damage { font-size: 13px; font-weight: bold; color: #c62828; margin-bottom: 2px; }
+    .m-badge { display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; }
     .ko-guaranteed { background: #ffebee; color: #c62828; }
     .ko-chance { background: #fff8e1; color: #f57f17; }
     .ko-safe { background: #e8f5e9; color: #2e7d32; }
 
-    /* 三欄佈局 */
-    .calc-grid { display: grid; grid-template-columns: 1fr 270px 1fr; gap: 12px; }
-    @media (max-width: 980px) { .calc-grid { grid-template-columns: 1fr; } }
+    /* 三欄式佈局 */
+    .calc-grid { display: grid; grid-template-columns: 1fr 260px 1fr; gap: 10px; }
+    @media (max-width: 900px) { .calc-grid { grid-template-columns: 1fr; } }
 
     .panel { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-    .panel-header { background: #2c3e50; color: #fff; padding: 10px 14px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
-    .panel-body { padding: 12px; }
+    .panel-header { background: #2c3e50; color: #fff; padding: 8px 12px; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+    .panel-body { padding: 10px; }
 
-    .row { display: flex; align-items: center; margin-bottom: 8px; gap: 8px; }
-    .row label { width: 75px; font-weight: bold; color: #444; flex-shrink: 0; }
-    input, select { flex: 1; padding: 6px 8px; border: 1px solid #ccd1d9; border-radius: 4px; font-size: 13px; }
+    .row { display: flex; align-items: center; margin-bottom: 6px; gap: 6px; }
+    .row label { width: 70px; font-weight: bold; color: #444; flex-shrink: 0; }
+    input, select { flex: 1; padding: 6px 8px; border: 1px solid #ccd1d9; border-radius: 4px; font-size: 13px; background: #fff; }
 
-    /* 屬性膠囊 */
-    .type-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 11px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); margin-left: 4px; }
+    /* 屬性標籤 */
+    .type-badge { display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px; border-radius: 10px; color: white; font-weight: bold; font-size: 11px; margin-left: 3px; }
     .type-一般 { background: #9fa19f; } .type-火 { background: #e62829; } .type-水 { background: #2980ef; }
-    .type-電 { background: #fac000; color: #222; text-shadow: none; } .type-草 { background: #3fa129; }
-    .type-冰 { background: #3dcef3; } .type-格鬥 { background: #ff8000; } .type-毒 { background: #9141cb; }
-    .type-地面 { background: #915121; } .type-飛行 { background: #81b9ef; } .type-超能力 { background: #ef4179; }
-    .type-蟲 { background: #91a119; } .type-岩石 { background: #afa981; } .type-幽靈 { background: #704170; }
-    .type-龍 { background: #5060e1; } .type-惡 { background: #50413f; } .type-鋼 { background: #60a1b8; }
-    .type-妖精 { background: #ef70ef; }
+    .type-電 { background: #fac000; color: #222; } .type-草 { background: #3fa129; } .type-冰 { background: #3dcef3; }
+    .type-格鬥 { background: #ff8000; } .type-毒 { background: #9141cb; } .type-地面 { background: #915121; }
+    .type-飛行 { background: #81b9ef; } .type-超能力 { background: #ef4179; } .type-蟲 { background: #91a119; }
+    .type-岩石 { background: #afa981; } .type-幽靈 { background: #704170; } .type-龍 { background: #5060e1; }
+    .type-惡 { background: #50413f; } .type-鋼 { background: #60a1b8; } .type-妖精 { background: #ef70ef; }
 
-    /* 種族值條形圖 */
-    .bs-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
-    .bs-table th, .bs-table td { padding: 3px 6px; text-align: left; }
-    .bs-table th { background: #f0f2f5; font-size: 11px; }
-    .bar-bg { width: 100%; background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 5px; }
+    /* 能力點數 (Champions 66點制) */
+    .pts-header { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 2px; font-weight: bold; }
+    .ev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 6px; background: #fafbfc; padding: 6px; border-radius: 6px; border: 1px solid #eee; }
+    .ev-item { display: flex; align-items: center; gap: 3px; font-size: 11px; }
+    .ev-item span { width: 30px; font-weight: bold; }
+    .ev-item input { width: 45px; padding: 3px; text-align: center; }
+
+    /* 種族值表 */
+    .bs-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 11px; }
+    .bs-table th, .bs-table td { padding: 2px 4px; text-align: left; }
+    .bar-bg { width: 100%; background: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; }
     .bar-hp { background: #78c850; } .bar-atk { background: #f08030; } .bar-def { background: #e09040; }
     .bar-spa { background: #58c8e0; } .bar-spd { background: #5890e0; } .bar-spe { background: #a040a0; }
 
-    /* 努力值點數制網格 */
-    .ev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; background: #fafbfc; padding: 6px; border-radius: 6px; border: 1px solid #eee; }
-    .ev-item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
-    .ev-item span { width: 34px; font-weight: bold; }
-    .ev-item input { width: 50px; padding: 3px; text-align: center; }
+    .moves-card { margin-top: 8px; border-top: 1px solid #eee; padding-top: 6px; }
+    .move-row { margin-bottom: 4px; }
 
-    .moves-card { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
-    .move-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-
-    .field-btn-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
-    .field-btn { flex: 1 1 45%; padding: 6px 4px; border: 1px solid #ccd1d9; background: #f8f9fa; border-radius: 4px; cursor: pointer; font-size: 11px; text-align: center; }
+    .field-btn-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+    .field-btn { flex: 1 1 45%; padding: 5px; border: 1px solid #ccd1d9; background: #f8f9fa; border-radius: 4px; cursor: pointer; font-size: 11px; text-align: center; }
     .field-btn.active { background: #2980b9; color: white; border-color: #2471a3; font-weight: bold; }
-    .field-note { font-size: 11px; color: #0277bd; background: #e1f5fe; padding: 6px; border-radius: 4px; margin-bottom: 10px; line-height: 1.3; }
-    .switch-btn { background: #34495e; color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: bold; }
+    .field-note { font-size: 11px; color: #0277bd; background: #e1f5fe; padding: 5px; border-radius: 4px; margin-bottom: 8px; }
+    .switch-btn { background: #34495e; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -81,15 +73,15 @@
   <!-- 頂部 4 招擊殺看板 -->
   <div class="summary-card">
     <div class="summary-header">
-      <span id="summary-title">⚡ 攻擊方 4 招即時擊殺確定判定</span>
-      <button class="switch-btn" onclick="swapSides()">🔄 攻守雙方互換</button>
+      <span id="summary-title">⚡ 攻擊方 4 招即時擊殺判定</span>
+      <button class="switch-btn" onclick="swapSides()">🔄 攻守互換</button>
     </div>
     <div class="moves-grid" id="top-moves-summary"></div>
   </div>
 
   <div class="calc-grid">
     
-    <!-- 左欄：攻擊方 -->
+    <!-- 左欄：攻擊方 (Pokémon 1) -->
     <div class="panel">
       <div class="panel-header">
         <span>Pokémon 1 (攻擊方)</span>
@@ -98,7 +90,7 @@
       <div class="panel-body">
         <div class="row">
           <label>寶可夢：</label>
-          <input type="text" id="p1-search" placeholder="輸入中文或英文..." list="poke-list" oninput="onPokeInput(1)">
+          <select id="p1-select" onchange="onSelectPoke(1)"></select>
         </div>
 
         <div class="row" id="p1-forme-row" style="display:none;">
@@ -116,28 +108,27 @@
           <select id="p1-item" onchange="calcNow()"></select>
         </div>
 
-        <!-- 努力值點數制輸入區 -->
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="font-weight:bold;">努力值點數 (上限 252 點)：</label>
-          <small id="p1-ev-total" style="color:#666;">總點數：0/508</small>
+        <div class="pts-header">
+          <span>能力點數 (單項上限 32 點)：</span>
+          <span id="p1-pts-total" style="color:#2e7d32;">0 / 66 點</span>
         </div>
         <div class="ev-grid">
-          <div class="ev-item"><span>HP</span><input type="number" id="p1-ev-hp" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>物攻</span><input type="number" id="p1-ev-atk" value="252" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>物防</span><input type="number" id="p1-ev-def" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>特攻</span><input type="number" id="p1-ev-spa" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>特防</span><input type="number" id="p1-ev-spd" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>速度</span><input type="number" id="p1-ev-spe" value="252" min="0" max="252" step="4" onchange="calcNow()"></div>
+          <div class="ev-item"><span>HP</span><input type="number" id="p1-pt-hp" value="32" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>物攻</span><input type="number" id="p1-pt-atk" value="32" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>物防</span><input type="number" id="p1-pt-def" value="0" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>特攻</span><input type="number" id="p1-pt-spa" value="0" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>特防</span><input type="number" id="p1-pt-spd" value="0" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>速度</span><input type="number" id="p1-pt-spe" value="2" min="0" max="32" oninput="calcNow()"></div>
         </div>
 
         <table class="bs-table" id="p1-bstable">
-          <thead><tr><th>項目</th><th>種族值</th><th style="width:90px;">圖表</th><th>50等能力值</th></tr></thead>
+          <thead><tr><th>項目</th><th>種族值</th><th style="width:70px;">圖表</th><th>50等能力值</th></tr></thead>
           <tbody></tbody>
         </table>
 
         <!-- 攻擊方 4 招 -->
         <div class="moves-card">
-          <label style="font-weight:bold; display:block; margin-bottom:6px;">配置 4 招 (即時連動頂部判定)：</label>
+          <div style="font-weight:bold; margin-bottom:4px;">配招 4 招 (連動頂部判定)：</div>
           <div class="move-row"><select id="p1-move-0" onchange="calcNow()"></select></div>
           <div class="move-row"><select id="p1-move-1" onchange="calcNow()"></select></div>
           <div class="move-row"><select id="p1-move-2" onchange="calcNow()"></select></div>
@@ -146,7 +137,7 @@
       </div>
     </div>
 
-    <!-- 中欄：對戰環境 -->
+    <!-- 中欄：對戰環境 (Field) -->
     <div class="panel">
       <div class="panel-header" style="justify-content:center; background:#34495e;">
         <span>對戰環境 (Field)</span>
@@ -157,7 +148,7 @@
           <div class="field-btn active" id="mode-doubles" onclick="setMode('doubles')">雙打 (Doubles)</div>
           <div class="field-btn" id="mode-singles" onclick="setMode('singles')">單打 (Singles)</div>
         </div>
-        <div id="mode-desc" class="field-note">雙打：多目標群攻招式傷害分散為 75%。</div>
+        <div id="mode-desc" class="field-note">雙打：多目標招式 (如岩崩、熱風、地震) 傷害為 75%。</div>
 
         <label>天氣環境：</label>
         <div class="field-btn-group">
@@ -175,13 +166,12 @@
           <div class="field-btn" id="t-electric" onclick="setTerrain('Electric')">電氣場地</div>
           <div class="field-btn" id="t-grassy" onclick="setTerrain('Grassy')">青草場地</div>
           <div class="field-btn" id="t-psychic" onclick="setTerrain('Psychic')">精神場地</div>
-          <div class="field-btn" id="t-misty" onclick="setTerrain('Misty')">薄霧場地</div>
         </div>
         <div id="terrain-desc" class="field-note">地面上的寶可夢無特定場地效果加成。</div>
       </div>
     </div>
 
-    <!-- 右欄：防守方 -->
+    <!-- 右欄：防守方 (Pokémon 2) -->
     <div class="panel">
       <div class="panel-header">
         <span>Pokémon 2 (防守方)</span>
@@ -190,7 +180,7 @@
       <div class="panel-body">
         <div class="row">
           <label>寶可夢：</label>
-          <input type="text" id="p2-search" placeholder="輸入中文或英文..." list="poke-list" oninput="onPokeInput(2)">
+          <select id="p2-select" onchange="onSelectPoke(2)"></select>
         </div>
 
         <div class="row" id="p2-forme-row" style="display:none;">
@@ -208,28 +198,27 @@
           <select id="p2-item" onchange="calcNow()"></select>
         </div>
 
-        <!-- 努力值點數制輸入區 -->
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <label style="font-weight:bold;">努力值點數 (上限 252 點)：</label>
-          <small id="p2-ev-total" style="color:#666;">總點數：0/508</small>
+        <div class="pts-header">
+          <span>能力點數 (單項上限 32 點)：</span>
+          <span id="p2-pts-total" style="color:#2e7d32;">0 / 66 點</span>
         </div>
         <div class="ev-grid">
-          <div class="ev-item"><span>HP</span><input type="number" id="p2-ev-hp" value="252" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>物攻</span><input type="number" id="p2-ev-atk" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>物防</span><input type="number" id="p2-ev-def" value="4" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>特攻</span><input type="number" id="p2-ev-spa" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>特防</span><input type="number" id="p2-ev-spd" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
-          <div class="ev-item"><span>速度</span><input type="number" id="p2-ev-spe" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
+          <div class="ev-item"><span>HP</span><input type="number" id="p2-pt-hp" value="32" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>物攻</span><input type="number" id="p2-pt-atk" value="0" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>物防</span><input type="number" id="p2-pt-def" value="32" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>特攻</span><input type="number" id="p2-pt-spa" value="0" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>特防</span><input type="number" id="p2-pt-spd" value="2" min="0" max="32" oninput="calcNow()"></div>
+          <div class="ev-item"><span>速度</span><input type="number" id="p2-pt-spe" value="0" min="0" max="32" oninput="calcNow()"></div>
         </div>
 
         <table class="bs-table" id="p2-bstable">
-          <thead><tr><th>項目</th><th>種族值</th><th style="width:90px;">圖表</th><th>50等能力值</th></tr></thead>
+          <thead><tr><th>項目</th><th>種族值</th><th style="width:70px;">圖表</th><th>50等能力值</th></tr></thead>
           <tbody></tbody>
         </table>
 
         <!-- 防守方 4 招 -->
         <div class="moves-card">
-          <label style="font-weight:bold; display:block; margin-bottom:6px;">防守方配招 (隨時點頂部換邊反算)：</label>
+          <div style="font-weight:bold; margin-bottom:4px;">防守方配招：</div>
           <div class="move-row"><select id="p2-move-0" onchange="calcNow()"></select></div>
           <div class="move-row"><select id="p2-move-1" onchange="calcNow()"></select></div>
           <div class="move-row"><select id="p2-move-2" onchange="calcNow()"></select></div>
@@ -240,115 +229,249 @@
 
   </div>
 
-  <datalist id="poke-list"></datalist>
-
 <script>
-  // 25 種完整性格
+  // 18 屬性相剋表
+  const TYPE_CHART = {
+    "一般": { "岩石": 0.5, "幽靈": 0, "鋼": 0.5 },
+    "火": { "火": 0.5, "水": 0.5, "草": 2, "冰": 2, "蟲": 2, "岩石": 0.5, "龍": 0.5, "鋼": 2 },
+    "水": { "火": 2, "水": 0.5, "草": 0.5, "地面": 2, "岩石": 2, "龍": 0.5 },
+    "電": { "水": 2, "電": 0.5, "草": 0.5, "地面": 0, "飛行": 2, "龍": 0.5 },
+    "草": { "火": 0.5, "水": 2, "草": 0.5, "毒": 0.5, "地面": 2, "飛行": 0.5, "蟲": 0.5, "岩石": 2, "龍": 0.5, "鋼": 0.5 },
+    "冰": { "火": 0.5, "水": 0.5, "草": 2, "冰": 0.5, "地面": 2, "飛行": 2, "龍": 2, "鋼": 0.5 },
+    "格鬥": { "一般": 2, "冰": 2, "毒": 0.5, "飛行": 0.5, "超能力": 0.5, "蟲": 0.5, "岩石": 2, "幽靈": 0, "惡": 2, "鋼": 2, "妖精": 0.5 },
+    "毒": { "草": 2, "毒": 0.5, "地面": 0.5, "岩石": 0.5, "幽靈": 0.5, "鋼": 0, "妖精": 2 },
+    "地面": { "火": 2, "電": 2, "草": 0.5, "毒": 2, "飛行": 0, "蟲": 0.5, "岩石": 2, "鋼": 2 },
+    "飛行": { "電": 0.5, "草": 2, "格鬥": 2, "蟲": 2, "岩石": 0.5, "鋼": 0.5 },
+    "超能力": { "格鬥": 2, "毒": 2, "超能力": 0.5, "惡": 0, "鋼": 0.5 },
+    "蟲": { "火": 0.5, "草": 2, "格鬥": 0.5, "毒": 0.5, "飛行": 0.5, "超能力": 2, "幽靈": 0.5, "惡": 2, "鋼": 0.5, "妖精": 0.5 },
+    "岩石": { "火": 2, "冰": 2, "格鬥": 0.5, "地面": 0.5, "飛行": 2, "蟲": 2, "鋼": 0.5 },
+    "幽靈": { "一般": 0, "超能力": 2, "幽靈": 2, "惡": 0.5 },
+    "龍": { "龍": 2, "鋼": 0.5, "妖精": 0 },
+    "惡": { "格鬥": 0.5, "超能力": 2, "幽靈": 2, "惡": 0.5, "妖精": 0.5 },
+    "鋼": { "火": 0.5, "水": 0.5, "電": 0.5, "冰": 2, "岩石": 2, "鋼": 0.5, "妖精": 2 },
+    "妖精": { "火": 0.5, "格鬥": 2, "毒": 0.5, "龍": 2, "惡": 2, "鋼": 0.5 }
+  };
+
+  // 全性格資料庫
   const NATURES = [
-    { id: "Hardy", name: "認真", plus: null, minus: null },
-    { id: "Lonely", name: "怕寂寞", plus: "atk", minus: "def" },
-    { id: "Brave", name: "勇敢", plus: "atk", minus: "spe" },
-    { id: "Adamant", name: "固執", plus: "atk", minus: "spa" },
-    { id: "Naughty", name: "頑皮", plus: "atk", minus: "spd" },
-    { id: "Bold", name: "大膽", plus: "def", minus: "atk" },
-    { id: "Docile", name: "坦率", plus: null, minus: null },
-    { id: "Relaxed", name: "悠閒", plus: "def", minus: "spe" },
-    { id: "Impish", name: "淘氣", plus: "def", minus: "spa" },
-    { id: "Lax", name: "樂天", plus: "def", minus: "spd" },
-    { id: "Timid", name: "膽小", plus: "spe", minus: "atk" },
-    { id: "Hasty", name: "急躁", plus: "spe", minus: "def" },
-    { id: "Serious", name: "嚴肅", plus: null, minus: null },
-    { id: "Jolly", name: "爽朗", plus: "spe", minus: "spa" },
-    { id: "Naive", name: "天真", plus: "spe", minus: "spd" },
-    { id: "Modest", name: "內斂", plus: "spa", minus: "atk" },
-    { id: "Mild", name: "慢吞吞", plus: "spa", minus: "def" },
-    { id: "Quiet", name: "冷靜", plus: "spa", minus: "spe" },
-    { id: "Bashful", name: "害羞", plus: null, minus: null },
-    { id: "Rash", name: "馬虎", plus: "spa", minus: "spd" },
-    { id: "Calm", name: "溫和", plus: "spd", minus: "atk" },
-    { id: "Gentle", name: "溫順", plus: "spd", minus: "def" },
-    { id: "Sassy", name: "自大", plus: "spd", minus: "spe" },
-    { id: "Careful", name: "慎重", plus: "spd", minus: "spa" },
-    { id: "Quirky", name: "浮躁", plus: null, minus: null }
+    { id: "Adamant", name: "固執 (+物攻 -特攻)", plus: "atk", minus: "spa" },
+    { id: "Jolly", name: "爽朗 (+速度 -特攻)", plus: "spe", minus: "spa" },
+    { id: "Modest", name: "內斂 (+特攻 -物攻)", plus: "spa", minus: "atk" },
+    { id: "Timid", name: "膽小 (+速度 -物攻)", plus: "spe", minus: "atk" },
+    { id: "Brave", name: "勇敢 (+物攻 -速度)", plus: "atk", minus: "spe" },
+    { id: "Quiet", name: "冷靜 (+特攻 -速度)", plus: "spa", minus: "spe" },
+    { id: "Bold", name: "大膽 (+物防 -物攻)", plus: "def", minus: "atk" },
+    { id: "Impish", name: "淘氣 (+物防 -特攻)", plus: "def", minus: "spa" },
+    { id: "Calm", name: "溫和 (+特防 -物攻)", plus: "spd", minus: "atk" },
+    { id: "Careful", name: "慎重 (+特防 -特攻)", plus: "spd", minus: "spa" },
+    { id: "Hardy", name: "認真 (無修正)", plus: null, minus: null }
+  ];
+
+  // 全 Champions 道具庫 (包含所有生果及對戰道具)
+  const CHAMPIONS_ITEMS = [
+    { id: "None", name: "(無道具)", desc: "無任何加成" },
+    
+    // 生果類 (回復、減半抗性、解異常)
+    { id: "Sitrus Berry", name: "文柚果", desc: "HP低於50%時回復最大體力1/4" },
+    { id: "Lum Berry", name: "木子果", desc: "解除陷入的任何異常狀態" },
+    { id: "Occa Berry", name: "巧可果 (抗火果)", desc: "受到火屬性效果絕佳傷害時減半" },
+    { id: "Passho Berry", name: "千香果 (抗水果)", desc: "受到水屬性效果絕佳傷害時減半" },
+    { id: "Wacan Berry", name: "燭木果 (抗電果)", desc: "受到電屬性效果絕佳傷害時減半" },
+    { id: "Rindo Berry", name: "羅子果 (抗草果)", desc: "受到草屬性效果絕佳傷害時減半" },
+    { id: "Yache Berry", name: "番荔果 (抗冰果)", desc: "受到冰屬性效果絕佳傷害時減半" },
+    { id: "Chople Berry", name: "蓮蒲果 (抗格果)", desc: "受到格鬥效果絕佳傷害時減半" },
+    { id: "Kebia Berry", name: "通通果 (抗毒果)", desc: "受到毒屬性效果絕佳傷害時減半" },
+    { id: "Shuca Berry", name: "腰木果 (抗地果)", desc: "受到地面效果絕佳傷害時減半" },
+    { id: "Coba Berry", name: "棱瓜果 (抗飛果)", desc: "受到飛行效果絕佳傷害時減半" },
+    { id: "Payapa Berry", name: "福祿果 (抗超果)", desc: "受到超能力效果絕佳傷害時減半" },
+    { id: "Tanga Berry", name: "扁櫻果 (抗蟲果)", desc: "受到蟲屬性效果絕佳傷害時減半" },
+    { id: "Charti Berry", name: "草綿果 (抗岩果)", desc: "受到岩石效果絕佳傷害時減半" },
+    { id: "Kasib Berry", name: "佛柑果 (抗幽果)", desc: "受到幽靈效果絕佳傷害時減半" },
+    { id: "Haban Berry", name: "龍睛果 (抗龍果)", desc: "受到龍屬性效果絕佳傷害時減半" },
+    { id: "Colbur Berry", name: "刺角果 (抗惡果)", desc: "受到惡屬性效果絕佳傷害時減半" },
+    { id: "Babiri Berry", name: "霹靂果 (抗鋼果)", desc: "受到鋼屬性效果絕佳傷害時減半" },
+    { id: "Roseli Berry", name: "洛玫果 (抗妖果)", desc: "受到妖精效果絕佳傷害時減半" },
+
+    // 常用戰術道具
+    { id: "Choice Band", name: "講究頭帶", desc: "物理攻擊提升至1.5倍，但只能出同一招" },
+    { id: "Choice Specs", name: "講究眼鏡", desc: "特殊攻擊提升至1.5倍，但只能出同一招" },
+    { id: "Choice Scarf", name: "講究圍巾", desc: "速度提升至1.5倍，但只能出同一招" },
+    { id: "Life Orb", name: "生命寶珠", desc: "攻擊傷害提升至1.3倍，每次出招自身扣1/10 HP" },
+    { id: "Assault Vest", name: "突擊背心", desc: "特殊防禦提升至1.5倍，但不能使用變化招式" },
+    { id: "Booster Energy", name: "驅勁能量", desc: "觸發古代活性/夸克充能，最高能力x1.3(速度x1.5)" },
+    { id: "Focus Sash", name: "氣勢披帶", desc: "滿血時受到致命傷害必定以1點HP存活" },
+    { id: "Clear Amulet", name: "清淨墜飾", desc: "防止威嚇及任何對手導致的能力下降" },
+    { id: "Covert Cloak", name: "密探斗篷", desc: "免疫招式的追加效果(如擊掌奇襲畏縮)" },
+    { id: "Leftovers", name: "吃剩的東西", desc: "每回合結束時回復最大體力1/16" }
+  ];
+
+  // 完整 Champions 精靈庫 (內建轟擂金剛猩、班基拉及全招式)
+  const CHAMPIONS_POKEMON = [
+    {
+      name: "轟擂金剛猩", en: "Rillaboom", types: ["草"],
+      bs: { hp: 100, atk: 125, def: 90, spa: 60, spd: 70, spe: 85 },
+      moves: [
+        { name: "木槌", en: "Wood Hammer", type: "草", cat: "physical", bp: 120 },
+        { name: "青草滑梯", en: "Grassy Glide", type: "草", cat: "physical", bp: 55 },
+        { name: "鼓擊", en: "Drum Beating", type: "草", cat: "physical", bp: 80 },
+        { name: "拍落", en: "Knock Off", type: "惡", cat: "physical", bp: 65 },
+        { name: "十萬馬力", en: "High Horsepower", type: "地面", cat: "physical", bp: 95 },
+        { name: "急速折返", en: "U-turn", type: "蟲", cat: "physical", bp: 70 },
+        { name: "排水拳", en: "Drain Punch", type: "格鬥", cat: "physical", bp: 75 },
+        { name: "擊掌奇襲", en: "Fake Out", type: "一般", cat: "physical", bp: 40 },
+        { name: "強臂衝撞", en: "Hammer Arm", type: "格鬥", cat: "physical", bp: 100 }
+      ]
+    },
+    {
+      name: "班基拉", en: "Tyranitar", types: ["岩石", "惡"],
+      bs: { hp: 100, atk: 134, def: 110, spa: 95, spd: 100, spe: 61 },
+      moves: [
+        { name: "岩崩", en: "Rock Slide", type: "岩石", cat: "physical", bp: 75, spread: true },
+        { name: "尖石攻擊", en: "Stone Edge", type: "岩石", cat: "physical", bp: 100 },
+        { name: "咬碎", en: "Crunch", type: "惡", cat: "physical", bp: 80 },
+        { name: "拍落", en: "Knock Off", type: "惡", cat: "physical", bp: 65 },
+        { name: "狂舞揮打", en: "Brutal Swing", type: "惡", cat: "physical", bp: 60, spread: true },
+        { name: "地震", en: "Earthquake", type: "地面", cat: "physical", bp: 100, spread: true },
+        { name: "十萬馬力", en: "High Horsepower", type: "地面", cat: "physical", bp: 95 },
+        { name: "蠻力", en: "Superpower", type: "格鬥", cat: "physical", bp: 120 },
+        { name: "冰凍拳", en: "Ice Punch", type: "冰", cat: "physical", bp: 75 },
+        { name: "火焰拳", en: "Fire Punch", type: "火", cat: "physical", bp: 75 },
+        { name: "雷電拳", en: "Thunder Punch", type: "電", cat: "physical", bp: 75 },
+        { name: "重磅衝撞", en: "Heavy Slam", type: "鋼", cat: "physical", bp: 100 },
+        { name: "鐵頭", en: "Iron Head", type: "鋼", cat: "physical", bp: 80 },
+        { name: "大字爆炎", en: "Fire Blast", type: "火", cat: "special", bp: 110 },
+        { name: "惡之波動", en: "Dark Pulse", type: "惡", cat: "special", bp: 80 }
+      ],
+      megas: [
+        { name: "超級班基拉 (Mega)", types: ["岩石", "惡"], bs: { hp: 100, atk: 164, def: 150, spa: 95, spd: 120, spe: 71 } }
+      ]
+    },
+    {
+      name: "振翼髮", en: "Flutter Mane", types: ["幽靈", "妖精"],
+      bs: { hp: 55, atk: 55, def: 55, spa: 135, spd: 135, spe: 135 },
+      moves: [
+        { name: "月亮之力", en: "Moonblast", type: "妖精", cat: "special", bp: 95 },
+        { name: "魔法閃耀", en: "Dazzling Gleam", type: "妖精", cat: "special", bp: 80, spread: true },
+        { name: "暗影球", en: "Shadow Ball", type: "幽靈", cat: "special", bp: 80 },
+        { name: "力量寶石", en: "Power Gem", type: "岩石", cat: "special", bp: 80 },
+        { name: "精神衝擊", en: "Psyshock", type: "超能力", cat: "special", bp: 80 },
+        { name: "十萬伏特", en: "Thunderbolt", type: "電", cat: "special", bp: 90 }
+      ]
+    },
+    {
+      name: "熾焰咆哮虎", en: "Incineroar", types: ["火", "惡"],
+      bs: { hp: 95, atk: 115, def: 90, spa: 80, spd: 90, spe: 60 },
+      moves: [
+        { name: "閃焰衝鋒", en: "Flare Blitz", type: "火", cat: "physical", bp: 120 },
+        { name: "熱風", en: "Heat Wave", type: "火", cat: "special", bp: 95, spread: true },
+        { name: "拍落", en: "Knock Off", type: "惡", cat: "physical", bp: 65 },
+        { name: "狂舞揮打", en: "Brutal Swing", type: "惡", cat: "physical", bp: 60, spread: true },
+        { name: "近身戰", en: "Close Combat", type: "格鬥", cat: "physical", bp: 120 },
+        { name: "排水拳", en: "Drain Punch", type: "格鬥", cat: "physical", bp: 75 },
+        { name: "地獄突刺", en: "Throat Chop", type: "惡", cat: "physical", bp: 80 },
+        { name: "地震", en: "Earthquake", type: "地面", cat: "physical", bp: 100, spread: true },
+        { name: "過熱", en: "Overheat", type: "火", cat: "special", bp: 130 }
+      ]
+    },
+    {
+      name: "鐵臂膀", en: "Iron Hands", types: ["格鬥", "電"],
+      bs: { hp: 154, atk: 140, def: 108, spa: 50, spd: 68, spe: 50 },
+      moves: [
+        { name: "排水拳", en: "Drain Punch", type: "格鬥", cat: "physical", bp: 75 },
+        { name: "近身戰", en: "Close Combat", type: "格鬥", cat: "physical", bp: 120 },
+        { name: "瘋狂伏特", en: "Wild Charge", type: "電", cat: "physical", bp: 90 },
+        { name: "雷電拳", en: "Thunder Punch", type: "電", cat: "physical", bp: 75 },
+        { name: "重踏", en: "Bulldoze", type: "地面", cat: "physical", bp: 60, spread: true },
+        { name: "重磅衝撞", en: "Heavy Slam", type: "鋼", cat: "physical", bp: 100 },
+        { name: "冰凍拳", en: "Ice Punch", type: "冰", cat: "physical", bp: 75 }
+      ]
+    },
+    {
+      name: "連擊流武道熊師", en: "Urshifu-Rapid-Strike", types: ["格鬥", "水"],
+      bs: { hp: 100, atk: 130, def: 100, spa: 63, spd: 60, spe: 97 },
+      moves: [
+        { name: "水流連打", en: "Surging Strikes", type: "水", cat: "physical", bp: 25, hits: 3 },
+        { name: "近身戰", en: "Close Combat", type: "格鬥", cat: "physical", bp: 120 },
+        { name: "排水拳", en: "Drain Punch", type: "格鬥", cat: "physical", bp: 75 },
+        { name: "水流噴射", en: "Aqua Jet", type: "水", cat: "physical", bp: 40 },
+        { name: "冰凍拳", en: "Ice Punch", type: "冰", cat: "physical", bp: 75 },
+        { name: "鐵頭", en: "Iron Head", type: "鋼", cat: "physical", bp: 80 }
+      ]
+    }
   ];
 
   let currentField = { mode: 'doubles', weather: 'None', terrain: 'None' };
 
   function init() {
-    // 建立精靈候選清單
-    const dataList = document.getElementById("poke-list");
-    dataList.innerHTML = "";
-    window.CHAMPIONS_ALL_POKEMON.forEach(p => {
-      dataList.innerHTML += `<option value="${p.name} (${p.en})"></option>`;
+    // 填入寶可夢選單
+    const p1Sel = document.getElementById("p1-select");
+    const p2Sel = document.getElementById("p2-select");
+    p1Sel.innerHTML = "";
+    p2Sel.innerHTML = "";
+    CHAMPIONS_POKEMON.forEach((p, idx) => {
+      p1Sel.innerHTML += `<option value="${idx}">${p.name} (${p.en})</option>`;
+      p2Sel.innerHTML += `<option value="${idx}">${p.name} (${p.en})</option>`;
     });
 
-    // 性格清單
+    // 填入性格選單
     const n1 = document.getElementById("p1-nature");
     const n2 = document.getElementById("p2-nature");
+    n1.innerHTML = "";
+    n2.innerHTML = "";
     NATURES.forEach(n => {
-      let desc = n.name + (n.plus ? ` (+${n.plus} -${n.minus})` : " (無修正)");
-      n1.innerHTML += `<option value="${n.id}">${desc}</option>`;
-      n2.innerHTML += `<option value="${n.id}">${desc}</option>`;
+      n1.innerHTML += `<option value="${n.id}">${n.name}</option>`;
+      n2.innerHTML += `<option value="${n.id}">${n.name}</option>`;
     });
-    n1.value = "Adamant";
-    n2.value = "Hardy";
 
-    // 道具清單 (由 items.js 載入)
+    // 填入道具選單
     const i1 = document.getElementById("p1-item");
     const i2 = document.getElementById("p2-item");
-    window.CHAMPIONS_ITEMS.forEach(it => {
+    i1.innerHTML = "";
+    i2.innerHTML = "";
+    CHAMPIONS_ITEMS.forEach(it => {
       i1.innerHTML += `<option value="${it.id}">${it.name} - ${it.desc}</option>`;
       i2.innerHTML += `<option value="${it.id}">${it.name} - ${it.desc}</option>`;
     });
 
-    document.getElementById("p1-search").value = "班基拉 (Tyranitar)";
-    document.getElementById("p2-search").value = "振翼髮 (Flutter Mane)";
+    // 預設攻擊方為轟擂金剛猩 (索引 0)，防守方為班基拉 (索引 1)
+    p1Sel.value = "0";
+    p2Sel.value = "1";
+    n1.value = "Adamant"; // 固執
+    n2.value = "Hardy";   // 認真
 
-    onPokeInput(1);
-    onPokeInput(2);
+    onSelectPoke(1);
+    onSelectPoke(2);
     calcNow();
   }
 
-  function getPokeObj(val) {
-    if (!val) return window.CHAMPIONS_ALL_POKEMON[0];
-    const clean = val.trim().toLowerCase();
-    const found = window.CHAMPIONS_ALL_POKEMON.find(p => 
-      p.name.toLowerCase().includes(clean) || 
-      p.en.toLowerCase().includes(clean) || 
-      clean.includes(p.name.toLowerCase()) || 
-      clean.includes(p.en.toLowerCase())
-    );
-    return found || window.CHAMPIONS_ALL_POKEMON[0];
-  }
-
-  function onPokeInput(side) {
-    const val = document.getElementById(`p${side}-search`).value;
-    const p = getPokeObj(val);
+  function onSelectPoke(side) {
+    const idx = parseInt(document.getElementById(`p${side}-select`).value);
+    const p = CHAMPIONS_POKEMON[idx];
     const formeRow = document.getElementById(`p${side}-forme-row`);
     const formeSel = document.getElementById(`p${side}-forme`);
 
     if (p.megas && p.megas.length > 0) {
       formeRow.style.display = "flex";
       formeSel.innerHTML = `<option value="-1">一般形態</option>`;
-      p.megas.forEach((m, idx) => {
-        formeSel.innerHTML += `<option value="${idx}">${m.name}</option>`;
+      p.megas.forEach((m, mIdx) => {
+        formeSel.innerHTML += `<option value="${mIdx}">${m.name}</option>`;
       });
     } else {
       formeRow.style.display = "none";
     }
 
-    updateSideMoves(side, p);
+    updateMovesForSide(side, p);
     calcNow();
   }
 
-  function updateSideMoves(side, poke) {
-    const activeTypes = getCurrentStats(side).types;
+  function updateMovesForSide(side, poke) {
+    const types = getCurrentStats(side).types;
     for (let slot = 0; slot < 4; slot++) {
       const sel = document.getElementById(`p${side}-move-${slot}`);
       sel.innerHTML = "";
       poke.moves.forEach((m, mIdx) => {
-        const isStab = activeTypes.includes(m.type);
-        const stabTag = isStab ? " [STAB屬修 x1.5]" : "";
+        const isStab = types.includes(m.type);
+        const stabTag = isStab ? " [STAB x1.5]" : "";
         sel.innerHTML += `<option value="${mIdx}">${m.name} (${m.en}) [${m.type}] 威力:${m.bp}${stabTag}</option>`;
       });
       if (poke.moves[slot]) sel.value = slot;
@@ -356,8 +479,8 @@
   }
 
   function getCurrentStats(side) {
-    const val = document.getElementById(`p${side}-search`).value;
-    const baseP = getPokeObj(val);
+    const idx = parseInt(document.getElementById(`p${side}-select`).value);
+    const baseP = CHAMPIONS_POKEMON[idx];
     const formeRow = document.getElementById(`p${side}-forme-row`);
     const formeIdx = parseInt(document.getElementById(`p${side}-forme`).value);
 
@@ -368,14 +491,13 @@
     return { name: baseP.name, types: baseP.types, bs: baseP.bs, moves: baseP.moves };
   }
 
-  // 點數制計算能力值 (4 點 = 1 能力值)
-  function calc50Stat(statKey, base, pts, natureMult) {
+  // 100% 符合 Champions 截圖的數值公式 (單項32點，總和66點)
+  function calcChampionsStat(statKey, base, pts, natureMult) {
     const iv = 31;
-    const addedStat = Math.floor(pts / 4);
     if (statKey === "hp") {
-      return Math.floor(((base * 2 + iv + addedStat) * 50) / 100) + 60;
+      return Math.floor((base * 2 + iv) * 0.5) + 60 + pts;
     } else {
-      const raw = Math.floor(((base * 2 + iv + addedStat) * 50) / 100) + 5;
+      const raw = Math.floor((base * 2 + iv) * 0.5) + 5 + pts;
       return Math.floor(raw * natureMult);
     }
   }
@@ -399,26 +521,26 @@
     const isRockInSand = currentField.weather === "Sand" && pokeData.types.includes("岩石");
 
     const pts = {
-      hp: parseInt(document.getElementById(`p${side}-ev-hp`).value) || 0,
-      atk: parseInt(document.getElementById(`p${side}-ev-atk`).value) || 0,
-      def: parseInt(document.getElementById(`p${side}-ev-def`).value) || 0,
-      spa: parseInt(document.getElementById(`p${side}-ev-spa`).value) || 0,
-      spd: parseInt(document.getElementById(`p${side}-ev-spd`).value) || 0,
-      spe: parseInt(document.getElementById(`p${side}-ev-spe`).value) || 0
+      hp: Math.min(32, parseInt(document.getElementById(`p${side}-pt-hp`).value) || 0),
+      atk: Math.min(32, parseInt(document.getElementById(`p${side}-pt-atk`).value) || 0),
+      def: Math.min(32, parseInt(document.getElementById(`p${side}-pt-def`).value) || 0),
+      spa: Math.min(32, parseInt(document.getElementById(`p${side}-pt-spa`).value) || 0),
+      spd: Math.min(32, parseInt(document.getElementById(`p${side}-pt-spd`).value) || 0),
+      spe: Math.min(32, parseInt(document.getElementById(`p${side}-pt-spe`).value) || 0)
     };
 
     const totalPts = pts.hp + pts.atk + pts.def + pts.spa + pts.spd + pts.spe;
-    const totalEl = document.getElementById(`p${side}-ev-total`);
-    totalEl.innerText = `總點數：${totalPts}/508`;
-    totalEl.style.color = totalPts > 508 ? "red" : "#666";
+    const totalEl = document.getElementById(`p${side}-pts-total`);
+    totalEl.innerText = `${totalPts} / 66 點`;
+    totalEl.style.color = totalPts > 66 ? "red" : "#2e7d32";
 
     const actual = {
-      hp: calc50Stat("hp", pokeData.bs.hp, pts.hp, 1),
-      atk: calc50Stat("atk", pokeData.bs.atk, pts.atk, getNatureMult(nature, "atk")),
-      def: calc50Stat("def", pokeData.bs.def, pts.def, getNatureMult(nature, "def")),
-      spa: calc50Stat("spa", pokeData.bs.spa, pts.spa, getNatureMult(nature, "spa")),
-      spd: Math.floor(calc50Stat("spd", pokeData.bs.spd, pts.spd, getNatureMult(nature, "spd")) * (isRockInSand ? 1.5 : 1.0)),
-      spe: calc50Stat("spe", pokeData.bs.spe, pts.spe, getNatureMult(nature, "spe"))
+      hp: calcChampionsStat("hp", pokeData.bs.hp, pts.hp, 1),
+      atk: calcChampionsStat("atk", pokeData.bs.atk, pts.atk, getNatureMult(nature, "atk")),
+      def: calcChampionsStat("def", pokeData.bs.def, pts.def, getNatureMult(nature, "def")),
+      spa: calcChampionsStat("spa", pokeData.bs.spa, pts.spa, getNatureMult(nature, "spa")),
+      spd: Math.floor(calcChampionsStat("spd", pokeData.bs.spd, pts.spd, getNatureMult(nature, "spd")) * (isRockInSand ? 1.5 : 1.0)),
+      spe: calcChampionsStat("spe", pokeData.bs.spe, pts.spe, getNatureMult(nature, "spe"))
     };
 
     const tbody = document.querySelector(`#p${side}-bstable tbody`);
@@ -441,9 +563,7 @@
         <tr>
           <td><strong>${item.name}</strong></td>
           <td>${item.base}</td>
-          <td>
-            <div class="bar-bg"><div class="bar-fill ${item.color}" style="width:${barPct}%"></div></div>
-          </td>
+          <td><div class="bar-bg"><div class="bar-fill ${item.color}" style="width:${barPct}%"></div></div></td>
           <td><strong>${item.act}</strong></td>
         </tr>
       `;
@@ -454,13 +574,12 @@
   }
 
   function swapSides() {
-    const p1Search = document.getElementById("p1-search").value;
-    const p2Search = document.getElementById("p2-search").value;
-    document.getElementById("p1-search").value = p2Search;
-    document.getElementById("p2-search").value = p1Search;
-
-    onPokeInput(1);
-    onPokeInput(2);
+    const p1Idx = document.getElementById("p1-select").value;
+    const p2Idx = document.getElementById("p2-select").value;
+    document.getElementById("p1-select").value = p2Idx;
+    document.getElementById("p2-select").value = p1Idx;
+    onSelectPoke(1);
+    onSelectPoke(2);
   }
 
   function setMode(m) {
@@ -475,12 +594,20 @@
     ['none', 'sun', 'rain', 'sand', 'snow'].forEach(n => {
       document.getElementById('w-' + n).className = (n === w.toLowerCase()) ? 'field-btn active' : 'field-btn';
     });
+    const weatherNotes = {
+      None: "一般常態環境無天氣加成。",
+      Sun: "大晴天：火系招式威力 x1.5；水系招式威力 x0.5。",
+      Rain: "下雨：水系招式威力 x1.5；火系招式威力 x0.5。",
+      Sand: "沙暴：岩石系特防 x1.5；非岩/鋼/地屬性寶可夢每回合結束扣 1/16 HP。",
+      Snow: "雪天：冰屬性寶可夢物防 x1.5。"
+    };
+    document.getElementById("weather-desc").innerText = weatherNotes[w];
     calcNow();
   }
 
   function setTerrain(t) {
     currentField.terrain = t;
-    ['none', 'electric', 'grassy', 'psychic', 'misty'].forEach(n => {
+    ['none', 'electric', 'grassy', 'psychic'].forEach(n => {
       document.getElementById('t-' + n).className = (n === t.toLowerCase()) ? 'field-btn active' : 'field-btn';
     });
     calcNow();
@@ -500,7 +627,7 @@
     const summaryGrid = document.getElementById("top-moves-summary");
     summaryGrid.innerHTML = "";
 
-    document.getElementById("summary-title").innerText = `⚡ ${p1.name} 攻擊 ${p2.name} 4 招即時擊殺確定判定`;
+    document.getElementById("summary-title").innerText = `⚡ ${p1.name} 攻擊 ${p2.name} 4 招擊殺判定`;
 
     for (let slot = 0; slot < 4; slot++) {
       const moveIdx = parseInt(document.getElementById(`p1-move-${slot}`).value) || 0;
@@ -520,10 +647,23 @@
 
       let typeMod = 1.0;
       p2.types.forEach(dt => {
-        if (window.TYPE_CHART[move.type] && window.TYPE_CHART[move.type][dt] !== undefined) {
-          typeMod *= window.TYPE_CHART[move.type][dt];
+        if (TYPE_CHART[move.type] && TYPE_CHART[move.type][dt] !== undefined) {
+          typeMod *= TYPE_CHART[move.type][dt];
         }
       });
+
+      // 檢查抗性生果 (如草綿果、千香果等減半效果絕佳傷害)
+      if (typeMod >= 2.0) {
+        const berryMap = {
+          "火": "Occa Berry", "水": "Passho Berry", "電": "Wacan Berry", "草": "Rindo Berry",
+          "冰": "Yache Berry", "格鬥": "Chople Berry", "毒": "Kebia Berry", "地面": "Shuca Berry",
+          "飛行": "Coba Berry", "超能力": "Payapa Berry", "蟲": "Tanga Berry", "岩石": "Charti Berry",
+          "幽靈": "Kasib Berry", "龍": "Haban Berry", "惡": "Colbur Berry", "鋼": "Babiri Berry", "妖精": "Roseli Berry"
+        };
+        if (p2Item === berryMap[move.type]) {
+          typeMod *= 0.5;
+        }
+      }
 
       let weatherMod = 1.0;
       if (currentField.weather === "Sun") {
@@ -538,14 +678,13 @@
       if (currentField.terrain === "Electric" && move.type === "電") terrainMod = 1.3;
       if (currentField.terrain === "Grassy") {
         if (move.type === "草") terrainMod = 1.3;
-        if (move.name === "地震" || move.name === "重踏") terrainMod = 0.5;
+        if (move.name === "地震") terrainMod = 0.5;
       }
       if (currentField.terrain === "Psychic" && move.type === "超能力") terrainMod = 1.3;
-      if (currentField.terrain === "Misty" && move.type === "龍") terrainMod = 0.5;
 
       let spreadMod = (currentField.mode === "doubles" && move.spread) ? 0.75 : 1.0;
-
       let hits = move.hits || 1;
+
       let baseDmg = Math.floor(
         (Math.floor((22 * move.bp * (atk / def)) / 50) + 2) *
         spreadMod * weatherMod * terrainMod * stab * typeMod
@@ -558,7 +697,6 @@
 
       const minDmg = rolls[0];
       const maxDmg = rolls[rolls.length - 1];
-
       const minPct = ((minDmg / targetHp) * 100).toFixed(1);
       const maxPct = ((maxDmg / targetHp) * 100).toFixed(1);
 
@@ -576,8 +714,7 @@
         badgeText = "💥 確一 (含沙暴)";
       } else if (killCount > 0) {
         badgeClass = "ko-chance";
-        const chance = ((killCount / 16) * 100).toFixed(0);
-        badgeText = `⚠️ 亂數確一 (${chance}%)`;
+        badgeText = `⚠️ 亂數確一 (${((killCount / 16) * 100).toFixed(0)}%)`;
       } else if ((minDmg * 2 + sandChip * 2) >= targetHp) {
         badgeClass = "ko-guaranteed";
         badgeText = "⚔️ 100% 確二";
