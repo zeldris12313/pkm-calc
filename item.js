@@ -1,28 +1,75 @@
-// Champions 賽制全攜帶道具庫
-window.CHAMPIONS_ITEMS = [
-  { id: "None", name: "(無攜帶道具)", desc: "無加成" },
-  
-  // 核心輸出/增傷道具
-  { id: "Choice Band", name: "講究頭帶", desc: "物理攻擊 x1.5，但只能使用同一招式", type: "offensive", mult: 1.5, stat: "atk" },
-  { id: "Choice Specs", name: "講究眼鏡", desc: "特殊攻擊 x1.5，但只能使用同一招式", type: "offensive", mult: 1.5, stat: "spa" },
-  { id: "Life Orb", name: "生命寶珠", desc: "每次招式傷害 x1.3，自身扣除 1/10 體力", type: "offensive_damage", mult: 1.3 },
-  { id: "Expert Belt", name: "達人帶", desc: "造成屬性效果絕佳時，傷害 x1.2", type: "offensive_super", mult: 1.2 },
-  { id: "Booster Energy", name: "驅勁能量", desc: "古代活性/夸克充能：最高能力提升 1.3 倍 (速度 1.5 倍)", type: "booster" },
+// 🍓 樹果 (生果類)
+window.BERRY_ITEMS = [
+  { id: "Sitrus Berry", name: "文柚果", en: "Sitrus Berry", desc: "HP低於50%時回復最大體力1/4" },
+  { id: "Lum Berry", name: "木子果", en: "Lum Berry", desc: "解除陷入的任何異常狀態" },
+  { id: "Oran Berry", name: "橙橙果", en: "Oran Berry", desc: "回復10點HP" },
+  { id: "Iapapa Berry", name: "勿忘果", en: "Iapapa Berry", desc: "HP低於1/4時回復1/3最大體力" },
+  { id: "Aguav Berry", name: "異奇果", en: "Aguav Berry", desc: "HP低於1/4時回復1/3最大體力" },
+  { id: "Mago Berry", name: "芒芒果", en: "Mago Berry", desc: "HP低於1/4時回復1/3最大體力" },
+  { id: "Wiki Berry", name: "樂芭果", en: "Wiki Berry", desc: "HP低於1/4時回復1/3最大體力" },
+  { id: "Figy Berry", name: "芭亞果", en: "Figy Berry", desc: "HP低於1/4時回復1/3最大體力" },
+  { id: "Salac Berry", name: "沙鱗果", en: "Salac Berry", desc: "HP低於1/4時速度提升1級" },
+  { id: "Petaya Berry", name: "枝椏果", en: "Petaya Berry", desc: "HP低於1/4時特攻提升1級" },
+  { id: "Liechi Berry", name: "亞齊果", en: "Liechi Berry", desc: "HP低於1/4時物攻提升1級" },
+  { id: "Apicot Berry", name: "杏仔果", en: "Apicot Berry", desc: "HP低於1/4時特防提升1級" },
+  { id: "Lansat Berry", name: "蘭薩果", en: "Lansat Berry", desc: "HP低於1/4時擊中要害率提升" },
+  // 17 種效果絕佳抗性減半果
+  { id: "Occa Berry", name: "巧可果", en: "Occa Berry", desc: "受到火屬性效果絕佳傷害時減半" },
+  { id: "Passho Berry", name: "千香果", en: "Passho Berry", desc: "受到水屬性效果絕佳傷害時減半" },
+  { id: "Wacan Berry", name: "燭木果", en: "Wacan Berry", desc: "受到電屬性效果絕佳傷害時減半" },
+  { id: "Rindo Berry", name: "羅子果", en: "Rindo Berry", desc: "受到草屬性效果絕佳傷害時減半" },
+  { id: "Yache Berry", name: "番荔果", en: "Yache Berry", desc: "受到冰屬性效果絕佳傷害時減半" },
+  { id: "Chople Berry", name: "蓮蒲果", en: "Chople Berry", desc: "受到格鬥屬性效果絕佳傷害時減半" },
+  { id: "Kebia Berry", name: "通通果", en: "Kebia Berry", desc: "受到毒屬性效果絕佳傷害時減半" },
+  { id: "Shuca Berry", name: "腰木果", en: "Shuca Berry", desc: "受到地面屬性效果絕佳傷害時減半" },
+  { id: "Coba Berry", name: "棱瓜果", en: "Coba Berry", desc: "受到飛行屬性效果絕佳傷害時減半" },
+  { id: "Payapa Berry", name: "福祿果", en: "Payapa Berry", desc: "受到超能力效果絕佳傷害時減半" },
+  { id: "Tanga Berry", name: "扁櫻果", en: "Tanga Berry", desc: "受到蟲屬性效果絕佳傷害時減半" },
+  { id: "Charti Berry", name: "草綿果", en: "Charti Berry", desc: "受到岩石屬性效果絕佳傷害時減半" },
+  { id: "Kasib Berry", name: "佛柑果", en: "Kasib Berry", desc: "受到幽靈屬性效果絕佳傷害時減半" },
+  { id: "Haban Berry", name: "哈密果", en: "Haban Berry", desc: "受到龍屬性效果絕佳傷害時減半" },
+  { id: "Colbur Berry", name: "刺角果", en: "Colbur Berry", desc: "受到惡屬性效果絕佳傷害時減半" },
+  { id: "Babiri Berry", name: "霹靂果", en: "Babiri Berry", desc: "受到鋼屬性效果絕佳傷害時減半" },
+  { id: "Roseli Berry", name: "洛玫果", en: "Roseli Berry", desc: "受到妖精屬性效果絕佳傷害時減半" }
+];
 
-  // 防禦/抗性/生存道具
-  { id: "Assault Vest", name: "突擊背心", desc: "特殊防禦 x1.5，但無法使用變化招式", type: "defensive", mult: 1.5, stat: "spd" },
-  { id: "Focus Sash", name: "氣勢披帶", desc: "滿血時受到致命攻擊必定剩下 1 HP", type: "defensive" },
-  { id: "Eviolite", name: "進化奇石", desc: "未完全進化之寶可夢雙防 (物防/特防) x1.5", type: "eviolite" },
-
-  // 回復與持久道具
-  { id: "Sitrus Berry", name: "文柚果", desc: "HP 低於 50% 時立即回復最大 HP 的 1/4", type: "berry" },
-  { id: "Leftovers", name: "吃剩的東西", desc: "每回合結束時回復最大 HP 的 1/16", type: "recovery" },
-  { id: "Lum Berry", name: "木子果", desc: "解除自身陷入的所有異常狀態", type: "berry" },
-
-  // 功能與戰術道具
-  { id: "Choice Scarf", name: "講究圍巾", desc: "速度 x1.5，但只能使用同一招式", type: "speed", mult: 1.5, stat: "spe" },
-  { id: "Clear Amulet", name: "清淨墜飾", desc: "防止威嚇及所有對手引起的能力值下降效果", type: "utility" },
-  { id: "Covert Cloak", name: "密探斗篷", desc: "免疫對手招式的追加效果 (如畏縮、冰凍、燒傷)", type: "utility" },
-  { id: "Safety Goggles", name: "防塵護目鏡", desc: "免疫天氣傷害 (沙暴/冰雹) 及粉末類招式 (如催眠粉、憤怒粉)", type: "utility" },
-  { id: "Loaded Dice", name: "太晶微粒 / 充能骰子", desc: "連續攻擊招式固定命中 4~5 次", type: "utility" }
+// ⚔️ 對戰攜帶道具 (其餘類)
+window.BATTLE_ITEMS = [
+  // 輸出強化
+  { id: "Choice Band", name: "講究頭帶", en: "Choice Band", desc: "物理攻擊 x1.5，但只能出同一招" },
+  { id: "Choice Specs", name: "講究眼鏡", en: "Choice Specs", desc: "特殊攻擊 x1.5，但只能出同一招" },
+  { id: "Choice Scarf", name: "講究圍巾", en: "Choice Scarf", desc: "速度 x1.5，但只能出同一招" },
+  { id: "Life Orb", name: "生命寶珠", en: "Life Orb", desc: "傷害提升至 1.3 倍，自身出招扣 1/10 HP" },
+  { id: "Expert Belt", name: "達人帶", en: "Expert Belt", desc: "造成效果絕佳傷害時，傷害提升至 1.2 倍" },
+  { id: "Booster Energy", name: "驅勁能量", en: "Booster Energy", desc: "觸發古代活性/夸克充能，最高能力 x1.3 (速度 x1.5)" },
+  // 生存防禦
+  { id: "Assault Vest", name: "突擊背心", en: "Assault Vest", desc: "特殊防禦 x1.5，但不能使用變化招式" },
+  { id: "Focus Sash", name: "氣勢披帶", en: "Focus Sash", desc: "滿血時受到致命攻擊必定剩下 1 點 HP" },
+  { id: "Eviolite", name: "進化奇石", en: "Eviolite", desc: "未完全進化寶可夢雙防 (物防與特防) 各 x1.5" },
+  { id: "Leftovers", name: "吃剩的東西", en: "Leftovers", desc: "每回合結束時回復最大體力 1/16" },
+  { id: "Rocky Helmet", name: "凸凸頭盔", en: "Rocky Helmet", desc: "受到接觸類招式攻擊時，對手損失 1/6 最大體力" },
+  { id: "Clear Amulet", name: "清淨墜飾", en: "Clear Amulet", desc: "防止威嚇及任何由對手導致的能力下降效果" },
+  { id: "Covert Cloak", name: "密探斗篷", en: "Covert Cloak", desc: "免疫招式的追加效果 (如擊掌奇襲的畏縮)" },
+  { id: "Safety Goggles", name: "防塵護目鏡", en: "Safety Goggles", desc: "免疫天氣傷害 (沙暴/冰雹) 及粉末類招式" },
+  { id: "Weakness Policy", name: "弱點保險", en: "Weakness Policy", desc: "受到效果絕佳攻擊時，物攻與特攻各提升 2 級" },
+  { id: "Air Balloon", name: "氣球", en: "Air Balloon", desc: "使攜帶者浮空，免疫地面屬性攻擊" },
+  // 屬性 1.2 倍增傷道具
+  { id: "Spell Tag", name: "詛咒之符", en: "Spell Tag", desc: "幽靈屬性招式威力 x1.2" },
+  { id: "Charcoal", name: "木炭", en: "Charcoal", desc: "火屬性招式威力 x1.2" },
+  { id: "Mystic Water", name: "神秘水滴", en: "Mystic Water", desc: "水屬性招式威力 x1.2" },
+  { id: "Magnet", name: "磁鐵", en: "Magnet", desc: "電屬性招式威力 x1.2" },
+  { id: "Miracle Seed", name: "奇蹟種子", en: "Miracle Seed", desc: "草屬性招式威力 x1.2" },
+  { id: "Never-Melt Ice", name: "不融冰", en: "Never-Melt Ice", desc: "冰屬性招式威力 x1.2" },
+  { id: "Black Belt", name: "黑帶", en: "Black Belt", desc: "格鬥屬性招式威力 x1.2" },
+  { id: "Poison Barb", name: "毒針", en: "Poison Barb", desc: "毒屬性招式威力 x1.2" },
+  { id: "Soft Sand", name: "軟沙", en: "Soft Sand", desc: "地面屬性招式威力 x1.2" },
+  { id: "Sharp Beak", name: "銳利鳥嘴", en: "Sharp Beak", desc: "飛行屬性招式威力 x1.2" },
+  { id: "Twisted Spoon", name: "彎曲的湯匙", en: "Twisted Spoon", desc: "超能力屬性招式威力 x1.2" },
+  { id: "Silver Powder", name: "銀色粉末", en: "Silver Powder", desc: "蟲屬性招式威力 x1.2" },
+  { id: "Hard Stone", name: "硬石頭", en: "Hard Stone", desc: "岩石屬性招式威力 x1.2" },
+  { id: "Dragon Fang", name: "龍之牙", en: "Dragon Fang", desc: "龍屬性招式威力 x1.2" },
+  { id: "Black Glasses", name: "黑色眼鏡", en: "Black Glasses", desc: "惡屬性招式威力 x1.2" },
+  { id: "Metal Coat", name: "金屬膜", en: "Metal Coat", desc: "鋼屬性招式威力 x1.2" },
+  { id: "Fairy Feather", name: "妖精之羽", en: "Fairy Feather", desc: "妖精屬性招式威力 x1.2" },
+  { id: "Silk Scarf", name: "絲綢圍巾", en: "Silk Scarf", desc: "一般屬性招式威力 x1.2" }
 ];
