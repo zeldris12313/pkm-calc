@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Champion 傷害計算機</title>
+  
+  <!-- 載入官方計算核心 -->
+  <script src="https://cdn.jsdelivr.net/npm/@smogon/calc/dist/calc.min.js"></script>
+
+  <!-- 載入 Firebase 模組 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth, 
+      GoogleAuthProvider, 
+      signInWithPopup, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      getDocs, 
+      query, 
+      where 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // 🔴 替換成你頭先在 Firebase 複製的設定 🔴
+    const firebaseConfig = {
+      apiKey: "AIzaSyCXZQiZe-hhkrv0zRNA1A3UpIpCovZvaHI",
+      authDomain: "pkmchampions-a84c7.firebaseapp.com",
+      projectId: "pkmchampions-a84c7",
+      storageBucket: "pkmchampions-a84c7.firebasestorage.app",
+      messagingSenderId: "521099058402",
+      appId: "1:521099058402:web:90c8f323c6e815a5a752bb",
+      measurementId: "G-H6R3T5FNK9"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+
+    // 監聽登入狀態（完全不強迫登入）
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      const userStatusDiv = document.getElementById("user-status");
+      const saveBtn = document.getElementById("save-btn");
+      const myPokemonSection = document.getElementById("my-pokemon-section");
+
+      if (user) {
+        userStatusDiv.innerHTML = `已登入：${user.displayName} <button id="logout-btn">登出</button>`;
+        document.getElementById("logout-btn").onclick = () => signOut(auth);
+        saveBtn.disabled = false;
+        saveBtn.innerText = "⭐ 儲存此寶可夢到我的帳號";
+        myPokemonSection.style.display = "block";
+        loadMySavedPokemon();
+      } else {
+        userStatusDiv.innerHTML = `<button id="login-btn">🔑 Google 登入 (啟用儲存功能)</button>`;
+        document.getElementById("login-btn").onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+        saveBtn.disabled = true;
+        saveBtn.innerText = "登入後可儲存配置";
+        myPokemonSection.style.display = "none";
+      }
+    });
+
+    // 儲存功能
+    window.saveCurrentPokemon = async function() {
+      if (!currentUser) return;
+      const select = document.getElementById("attackerSelect");
+      const pokeId = select.value;
+      const pokeName = select.options[select.selectedIndex].text;
+      const customNick = prompt("請為這隻寶可夢加個備註（例如：速攻型、耐久向）：", "常用配置");
+      
+      if (!customNick) return;
+
+      try {
+        await addDoc(collection(db, "saved_pokemon"), {
+          uid: currentUser.uid,
+          pokeId: pokeId,
+          name: pokeName,
+          tag: customNick,
+          createdAt: new Date()
+        });
+        alert("已成功儲存！");
+        loadMySavedPokemon();
+      } catch (err) {
+        alert("儲存失敗：" + err.message);
+      }
+    };
+
+    // 讀取自己已儲存的清單
+    async function loadMySavedPokemon() {
+      const listEl = document.getElementById("my-saved-list");
+      listEl.innerHTML = "讀取中...";
+      
+      const q = query(collection(db, "saved_pokemon"), where("uid", "==", currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        listEl.innerHTML = "尚未有儲存的寶可夢。";
+        return;
+      }
+
+      listEl.innerHTML = "";
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const item = document.createElement("div");
+        item.className = "saved-item";
+        item.innerHTML = `
+          <span><strong>${data.name}</strong> [${data.tag}]</span>
+          <button onclick="applySaved('${data.pokeId}')">套用到攻擊方</button>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    window.applySaved = function(pokeId) {
+      document.getElementById("attackerSelect").value = pokeId;
+    };
+  </script>
+
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; padding: 20px; color: #1c1e21; }
+    .container { max-width: 650px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e5e5; padding-bottom: 12px; margin-bottom: 20px; }
+    .box { border: 1px solid #e1e4e8; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fafbfc; }
+    label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+    select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; box-sizing: border-box; }
+    button.calc-btn { background: #e3350d; color: white; border: none; font-weight: bold; cursor: pointer; padding: 14px; }
+    button.calc-btn:hover { background: #c22d0b; }
+    .saved-box { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+    .saved-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px dashed #ddd; }
+    .saved-item button { width: auto; margin: 0; padding: 4px 10px; font-size: 12px; }
+    .result-box { margin-top: 20px; padding: 15px; background: #e7f3ff; border: 1px solid #b6d4fe; border-radius: 8px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="top-bar">
+    <h2 style="margin: 0; font-size: 20px;">🏆 Champion 傷害計算機</h2>
+    <div id="user-status"><small>載入中...</small></div>
+  </div>
+
+  <div id="my-pokemon-section" class="saved-box" style="display:none;">
+    <label>📂 我的常用隊伍：</label>
+    <div id="my-saved-list"></div>
+  </div>
+
+  <div class="box">
+    <label>攻擊方寶可夢：</label>
+    <select id="attackerSelect"></select>
+    
+    <label>使用招式：</label>
+    <select id="moveSelect">
+      <option value="Moonblast">月亮之力 (Moonblast)</option>
+      <option value="Shadow Ball">暗影球 (Shadow Ball)</option>
+      <option value="Stone Edge">尖石攻擊 (Stone Edge)</option>
+      <option value="Drain Punch">排水拳 (Drain Punch)</option>
+      <option value="Close Combat">近身戰 (Close Combat)</option>
+      <option value="Earthquake">地震 (Earthquake)</option>
+      <option value="Ivy Cudgel">棘藤棒 (Ivy Cudgel)</option>
+      <option value="Flare Blitz">閃焰衝鋒 (Flare Blitz)</option>
+      <option value="Surging Strikes">水流連打 (Surging Strikes)</option>
+    </select>
+
+    <button id="save-btn" onclick="saveCurrentPokemon()" disabled>登入後可儲存配置</button>
+  </div>
+
+  <div class="box">
+    <label>防守方寶可夢：</label>
+    <select id="defenderSelect"></select>
+  </div>
+
+  <button class="calc-btn" onclick="runCalc()">⚡ 計算傷害</button>
+
+  <div id="output" class="result-box" style="display:none;"></div>
+</div>
+
+<script>
+// 讀取 champions.json 名單
+async function initSeasonPool() {
+  try {
+    const res = await fetch('champions.json');
+    const pool = await res.json();
+    
+    const atkSel = document.getElementById("attackerSelect");
+    const defSel = document.getElementById("defenderSelect");
+
+    pool.forEach(p => {
+      const opt = `<option value="${p.id}">${p.name} (${p.id})</option>`;
+      atkSel.innerHTML += opt;
+      defSel.innerHTML += opt;
+    });
+  } catch (err) {
+    console.error("讀取 champions.json 失敗", err);
+  }
+}
+initSeasonPool();
+
+// 計算核心
+function runCalc() {
+  const calcLib = window.calc;
+  const gen = calcLib.Generations.get(9);
+
+  const attackerId = document.getElementById("attackerSelect").value;
+  const defenderId = document.getElementById("defenderSelect").value;
+  const moveId = document.getElementById("moveSelect").value;
+
+  const attacker = new calcLib.Pokemon(gen, attackerId);
+  const defender = new calcLib.Pokemon(gen, defenderId);
+  const move = new calcLib.Move(gen, moveId);
+
+  const result = calcLib.calculate(gen, attacker, defender, move);
+
+  const dmgRange = result.damage;
+  const minDmg = Array.isArray(dmgRange) ? dmgRange[0] : dmgRange;
+  const maxDmg = Array.isArray(dmgRange) ? dmgRange[dmgRange.length - 1] : dmgRange;
+  const defenderHp = defender.rawStats.hp;
+
+  const minPct = ((minDmg / defenderHp) * 100).toFixed(1);
+  const maxPct = ((maxDmg / defenderHp) * 100).toFixed(1);
+
+  const out = document.getElementById("output");
+  out.style.display = "block";
+  out.innerHTML = `
+    <strong>計算結果：</strong><br>
+    傷害數值：<strong>${minDmg} ~ ${maxDmg}</strong> HP<br>
+    佔對手總血量：<strong>${minPct}% ~ ${maxPct}%</strong><br>
+    <small style="color: #666;">（${result.desc()}）</small>
+  `;
+}
+</script>
+</body>
+</html>
