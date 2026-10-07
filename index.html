@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VGC Champions 傷害計算機</title>
   
-  <!-- 引入獨立資料庫 pokedex.js -->
-  <script src="pokedex.js"></script>
+  <!-- 引入模組化檔案 -->
+  <script src="items.js"></script>
+  <script src="pokedex_part1.js"></script>
+  <!-- 將來若加第二批只需在此加: <script src="pokedex_part2.js"></script> -->
 
   <style>
     * { box-sizing: border-box; }
@@ -20,7 +22,6 @@
     @media (max-width: 500px) { .moves-grid { grid-template-columns: 1fr; } }
     
     .move-calc-box { border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; background: #fafbfc; position: relative; border-top: 4px solid #999; }
-    .move-calc-box.active { border-color: #2980b9; background: #f0f7fc; }
     .m-title { font-weight: bold; font-size: 13px; margin-bottom: 4px; display: flex; justify-content: space-between; }
     .m-damage { font-size: 14px; font-weight: bold; color: #c62828; margin-bottom: 4px; }
     .m-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
@@ -59,17 +60,15 @@
     .bar-hp { background: #78c850; } .bar-atk { background: #f08030; } .bar-def { background: #e09040; }
     .bar-spa { background: #58c8e0; } .bar-spd { background: #5890e0; } .bar-spe { background: #a040a0; }
 
-    /* EV 輸入網格 */
+    /* 努力值點數制網格 */
     .ev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; background: #fafbfc; padding: 6px; border-radius: 6px; border: 1px solid #eee; }
     .ev-item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
-    .ev-item span { width: 28px; font-weight: bold; }
-    .ev-item input { width: 45px; padding: 2px 4px; text-align: center; }
+    .ev-item span { width: 34px; font-weight: bold; }
+    .ev-item input { width: 50px; padding: 3px; text-align: center; }
 
-    /* 配招區塊 */
     .moves-card { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
     .move-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 
-    /* 場地按鈕 */
     .field-btn-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
     .field-btn { flex: 1 1 45%; padding: 6px 4px; border: 1px solid #ccd1d9; background: #f8f9fa; border-radius: 4px; cursor: pointer; font-size: 11px; text-align: center; }
     .field-btn.active { background: #2980b9; color: white; border-color: #2471a3; font-weight: bold; }
@@ -79,7 +78,7 @@
 </head>
 <body>
 
-  <!-- 頂部：4 招即時擊殺大看板 -->
+  <!-- 頂部 4 招擊殺看板 -->
   <div class="summary-card">
     <div class="summary-header">
       <span id="summary-title">⚡ 攻擊方 4 招即時擊殺確定判定</span>
@@ -90,7 +89,7 @@
 
   <div class="calc-grid">
     
-    <!-- 左欄：攻擊方 (Pokémon 1) -->
+    <!-- 左欄：攻擊方 -->
     <div class="panel">
       <div class="panel-header">
         <span>Pokémon 1 (攻擊方)</span>
@@ -99,7 +98,7 @@
       <div class="panel-body">
         <div class="row">
           <label>寶可夢：</label>
-          <input type="text" id="p1-search" placeholder="中/英文搜尋..." list="poke-list" oninput="onPokeInput(1)">
+          <input type="text" id="p1-search" placeholder="輸入中文或英文..." list="poke-list" oninput="onPokeInput(1)">
         </div>
 
         <div class="row" id="p1-forme-row" style="display:none;">
@@ -117,7 +116,11 @@
           <select id="p1-item" onchange="calcNow()"></select>
         </div>
 
-        <label style="font-weight:bold;">努力值 (EVs)：</label>
+        <!-- 努力值點數制輸入區 -->
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label style="font-weight:bold;">努力值點數 (上限 252 點)：</label>
+          <small id="p1-ev-total" style="color:#666;">總點數：0/508</small>
+        </div>
         <div class="ev-grid">
           <div class="ev-item"><span>HP</span><input type="number" id="p1-ev-hp" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
           <div class="ev-item"><span>物攻</span><input type="number" id="p1-ev-atk" value="252" min="0" max="252" step="4" onchange="calcNow()"></div>
@@ -128,7 +131,7 @@
         </div>
 
         <table class="bs-table" id="p1-bstable">
-          <thead><tr><th>項目</th><th>種族值</th><th style="width:90px;">圖表</th><th>50等實數值</th></tr></thead>
+          <thead><tr><th>項目</th><th>種族值</th><th style="width:90px;">圖表</th><th>50等能力值</th></tr></thead>
           <tbody></tbody>
         </table>
 
@@ -143,7 +146,7 @@
       </div>
     </div>
 
-    <!-- 中欄：對戰環境 (Field) -->
+    <!-- 中欄：對戰環境 -->
     <div class="panel">
       <div class="panel-header" style="justify-content:center; background:#34495e;">
         <span>對戰環境 (Field)</span>
@@ -178,7 +181,7 @@
       </div>
     </div>
 
-    <!-- 右欄：防守方 (Pokémon 2) -->
+    <!-- 右欄：防守方 -->
     <div class="panel">
       <div class="panel-header">
         <span>Pokémon 2 (防守方)</span>
@@ -187,7 +190,7 @@
       <div class="panel-body">
         <div class="row">
           <label>寶可夢：</label>
-          <input type="text" id="p2-search" placeholder="中/英文搜尋..." list="poke-list" oninput="onPokeInput(2)">
+          <input type="text" id="p2-search" placeholder="輸入中文或英文..." list="poke-list" oninput="onPokeInput(2)">
         </div>
 
         <div class="row" id="p2-forme-row" style="display:none;">
@@ -205,7 +208,11 @@
           <select id="p2-item" onchange="calcNow()"></select>
         </div>
 
-        <label style="font-weight:bold;">努力值 (EVs)：</label>
+        <!-- 努力值點數制輸入區 -->
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <label style="font-weight:bold;">努力值點數 (上限 252 點)：</label>
+          <small id="p2-ev-total" style="color:#666;">總點數：0/508</small>
+        </div>
         <div class="ev-grid">
           <div class="ev-item"><span>HP</span><input type="number" id="p2-ev-hp" value="252" min="0" max="252" step="4" onchange="calcNow()"></div>
           <div class="ev-item"><span>物攻</span><input type="number" id="p2-ev-atk" value="0" min="0" max="252" step="4" onchange="calcNow()"></div>
@@ -216,11 +223,11 @@
         </div>
 
         <table class="bs-table" id="p2-bstable">
-          <thead><tr><th>項目</th><th>種族值</th><th style="width:90px;">圖表</th><th>50等實數值</th></tr></thead>
+          <thead><tr><th>項目</th><th>種族值</th><th style="width:90px;">圖表</th><th>50等能力值</th></tr></thead>
           <tbody></tbody>
         </table>
 
-        <!-- 防守方 4 招 (反向配招) -->
+        <!-- 防守方 4 招 -->
         <div class="moves-card">
           <label style="font-weight:bold; display:block; margin-bottom:6px;">防守方配招 (隨時點頂部換邊反算)：</label>
           <div class="move-row"><select id="p2-move-0" onchange="calcNow()"></select></div>
@@ -236,7 +243,7 @@
   <datalist id="poke-list"></datalist>
 
 <script>
-  // 完整性格與道具
+  // 25 種完整性格
   const NATURES = [
     { id: "Hardy", name: "認真", plus: null, minus: null },
     { id: "Lonely", name: "怕寂寞", plus: "atk", minus: "def" },
@@ -265,28 +272,17 @@
     { id: "Quirky", name: "浮躁", plus: null, minus: null }
   ];
 
-  const ITEMS = [
-    { id: "None", name: "(無道具)" },
-    { id: "Choice Band", name: "講究頭帶 (物理攻擊 x1.5)" },
-    { id: "Choice Specs", name: "講究眼鏡 (特殊攻擊 x1.5)" },
-    { id: "Choice Scarf", name: "講究圍巾 (速度 x1.5)" },
-    { id: "Life Orb", name: "生命寶珠 (傷害 x1.3)" },
-    { id: "Assault Vest", name: "突擊背心 (特殊防禦 x1.5)" },
-    { id: "Booster Energy", name: "驅勁能量 (最高能力 x1.3)" },
-    { id: "Focus Sash", name: "氣勢披帶 (滿血保命一次)" },
-    { id: "Sitrus Berry", name: "文柚果 (回復 1/4 HP)" },
-    { id: "Leftovers", name: "吃剩的東西 (回合回 1/16 HP)" }
-  ];
-
   let currentField = { mode: 'doubles', weather: 'None', terrain: 'None' };
 
   function init() {
+    // 建立精靈候選清單
     const dataList = document.getElementById("poke-list");
     dataList.innerHTML = "";
-    window.POKEMON_DB.forEach(p => {
+    window.CHAMPIONS_ALL_POKEMON.forEach(p => {
       dataList.innerHTML += `<option value="${p.name} (${p.en})"></option>`;
     });
 
+    // 性格清單
     const n1 = document.getElementById("p1-nature");
     const n2 = document.getElementById("p2-nature");
     NATURES.forEach(n => {
@@ -297,11 +293,12 @@
     n1.value = "Adamant";
     n2.value = "Hardy";
 
+    // 道具清單 (由 items.js 載入)
     const i1 = document.getElementById("p1-item");
     const i2 = document.getElementById("p2-item");
-    ITEMS.forEach(it => {
-      i1.innerHTML += `<option value="${it.id}">${it.name}</option>`;
-      i2.innerHTML += `<option value="${it.id}">${it.name}</option>`;
+    window.CHAMPIONS_ITEMS.forEach(it => {
+      i1.innerHTML += `<option value="${it.id}">${it.name} - ${it.desc}</option>`;
+      i2.innerHTML += `<option value="${it.id}">${it.name} - ${it.desc}</option>`;
     });
 
     document.getElementById("p1-search").value = "班基拉 (Tyranitar)";
@@ -313,15 +310,15 @@
   }
 
   function getPokeObj(val) {
-    if (!val) return window.POKEMON_DB[0];
+    if (!val) return window.CHAMPIONS_ALL_POKEMON[0];
     const clean = val.trim().toLowerCase();
-    const found = window.POKEMON_DB.find(p => 
+    const found = window.CHAMPIONS_ALL_POKEMON.find(p => 
       p.name.toLowerCase().includes(clean) || 
       p.en.toLowerCase().includes(clean) || 
       clean.includes(p.name.toLowerCase()) || 
       clean.includes(p.en.toLowerCase())
     );
-    return found || window.POKEMON_DB[0];
+    return found || window.CHAMPIONS_ALL_POKEMON[0];
   }
 
   function onPokeInput(side) {
@@ -371,12 +368,14 @@
     return { name: baseP.name, types: baseP.types, bs: baseP.bs, moves: baseP.moves };
   }
 
-  function calc50Stat(statKey, base, ev, natureMult) {
+  // 點數制計算能力值 (4 點 = 1 能力值)
+  function calc50Stat(statKey, base, pts, natureMult) {
     const iv = 31;
+    const addedStat = Math.floor(pts / 4);
     if (statKey === "hp") {
-      return Math.floor(((base * 2 + iv + Math.floor(ev / 4)) * 50) / 100) + 60;
+      return Math.floor(((base * 2 + iv + addedStat) * 50) / 100) + 60;
     } else {
-      const raw = Math.floor(((base * 2 + iv + Math.floor(ev / 4)) * 50) / 100) + 5;
+      const raw = Math.floor(((base * 2 + iv + addedStat) * 50) / 100) + 5;
       return Math.floor(raw * natureMult);
     }
   }
@@ -399,7 +398,7 @@
     const nature = document.getElementById(`p${side}-nature`).value;
     const isRockInSand = currentField.weather === "Sand" && pokeData.types.includes("岩石");
 
-    const evs = {
+    const pts = {
       hp: parseInt(document.getElementById(`p${side}-ev-hp`).value) || 0,
       atk: parseInt(document.getElementById(`p${side}-ev-atk`).value) || 0,
       def: parseInt(document.getElementById(`p${side}-ev-def`).value) || 0,
@@ -408,13 +407,18 @@
       spe: parseInt(document.getElementById(`p${side}-ev-spe`).value) || 0
     };
 
+    const totalPts = pts.hp + pts.atk + pts.def + pts.spa + pts.spd + pts.spe;
+    const totalEl = document.getElementById(`p${side}-ev-total`);
+    totalEl.innerText = `總點數：${totalPts}/508`;
+    totalEl.style.color = totalPts > 508 ? "red" : "#666";
+
     const actual = {
-      hp: calc50Stat("hp", pokeData.bs.hp, evs.hp, 1),
-      atk: calc50Stat("atk", pokeData.bs.atk, evs.atk, getNatureMult(nature, "atk")),
-      def: calc50Stat("def", pokeData.bs.def, evs.def, getNatureMult(nature, "def")),
-      spa: calc50Stat("spa", pokeData.bs.spa, evs.spa, getNatureMult(nature, "spa")),
-      spd: Math.floor(calc50Stat("spd", pokeData.bs.spd, evs.spd, getNatureMult(nature, "spd")) * (isRockInSand ? 1.5 : 1.0)),
-      spe: calc50Stat("spe", pokeData.bs.spe, evs.spe, getNatureMult(nature, "spe"))
+      hp: calc50Stat("hp", pokeData.bs.hp, pts.hp, 1),
+      atk: calc50Stat("atk", pokeData.bs.atk, pts.atk, getNatureMult(nature, "atk")),
+      def: calc50Stat("def", pokeData.bs.def, pts.def, getNatureMult(nature, "def")),
+      spa: calc50Stat("spa", pokeData.bs.spa, pts.spa, getNatureMult(nature, "spa")),
+      spd: Math.floor(calc50Stat("spd", pokeData.bs.spd, pts.spd, getNatureMult(nature, "spd")) * (isRockInSand ? 1.5 : 1.0)),
+      spe: calc50Stat("spe", pokeData.bs.spe, pts.spe, getNatureMult(nature, "spe"))
     };
 
     const tbody = document.querySelector(`#p${side}-bstable tbody`);
@@ -449,7 +453,6 @@
     return actual;
   }
 
-  // 互換攻防雙方
   function swapSides() {
     const p1Search = document.getElementById("p1-search").value;
     const p2Search = document.getElementById("p2-search").value;
@@ -483,7 +486,6 @@
     calcNow();
   }
 
-  // 核心計算：一次過算哂 4 招
   function calcNow() {
     const p1 = getCurrentStats(1);
     const p2 = getCurrentStats(2);
@@ -500,7 +502,6 @@
 
     document.getElementById("summary-title").innerText = `⚡ ${p1.name} 攻擊 ${p2.name} 4 招即時擊殺確定判定`;
 
-    // 迴圈遍歷 4 個招式插槽
     for (let slot = 0; slot < 4; slot++) {
       const moveIdx = parseInt(document.getElementById(`p1-move-${slot}`).value) || 0;
       const move = p1.moves[moveIdx] || p1.moves[0];
